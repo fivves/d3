@@ -89,8 +89,10 @@ export function Prizes() {
         <div className="card-title"><span className="icon">🛒</span>Available</div>
         <div style={{ flex:1, display:'flex' }}>
           {available.length === 0 ? (
-            <div style={{ flex:1, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <div className="sub">No prizes available. Add some to view them here.</div>
+            <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div className="card" style={{ textAlign:'center' }}>
+                <div className="sub">No prizes available. Add some to view them here.</div>
+              </div>
             </div>
           ) : (
             <div className="grid" style={{ width:'100%' }}>
@@ -118,8 +120,10 @@ export function Prizes() {
         <div className="card-title"><span className="icon">✅</span>Purchases</div>
         <div style={{ flex:1, display:'flex' }}>
           {purchased.length === 0 ? (
-            <div style={{ flex:1, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <div className="sub">No purchases yet. Purchase some to view them here.</div>
+            <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div className="card" style={{ textAlign:'center' }}>
+                <div className="sub">No purchases yet. Purchase some to view them here.</div>
+              </div>
             </div>
           ) : (
             <div className="grid" style={{ width:'100%' }}>
