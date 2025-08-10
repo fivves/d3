@@ -9,6 +9,7 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
   const [remainingMs, setRemainingMs] = useState<number>(totalMs);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [breathMs, setBreathMs] = useState<number>(0); // 0..10000
+  const [breatheKey, setBreatheKey] = useState<number>(0);
 
   const intervalRef = useRef<number | null>(null);
   const lastTickRef = useRef<number | null>(null);
@@ -45,15 +46,25 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
     };
   }, [isRunning]);
 
-  const handleStart = () => {
-    if (remainingMs <= 0) setRemainingMs(totalMs);
-    setIsRunning(true);
+  const handlePrimary = () => {
+    // Finished → restart fresh and start running
+    if (remainingMs <= 0) {
+      setRemainingMs(totalMs);
+      setBreathMs(0);
+      setBreatheKey((k) => k + 1); // reset animation to initial state
+      setIsRunning(true);
+      return;
+    }
+
+    // Toggle pause/resume
+    setIsRunning((prev) => !prev);
   };
 
   const handleReset = () => {
     setIsRunning(false);
     setRemainingMs(totalMs);
     setBreathMs(0);
+    setBreatheKey((k) => k + 1); // force re-mount to reset CSS animation and phase
   };
 
   const mm = Math.floor(remainingMs / 60000)
@@ -74,7 +85,7 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
       <div className="timer-display" aria-live="polite">{mm}:{ss}</div>
       <div className="breath-label sub">{phaseLabel} 4–6</div>
 
-      <div className={`breathe${isRunning ? '' : ' paused'}`} aria-hidden>
+      <div key={breatheKey} className={`breathe${isRunning ? '' : ' paused'}`} aria-hidden>
         {petals.map((p) => (
           <div
             key={p}
@@ -86,8 +97,14 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
       </div>
 
       <div className="row" style={{ justifyContent: 'center' }}>
-        <button className="button" onClick={handleStart} disabled={isRunning && remainingMs > 0}>
-          {remainingMs <= 0 ? 'Restart 15:00' : 'Start 15:00'}
+        <button className="button" onClick={handlePrimary}>
+          {remainingMs <= 0
+            ? 'Restart 15:00'
+            : isRunning
+            ? 'Pause'
+            : remainingMs === totalMs
+            ? 'Start 15:00'
+            : 'Resume'}
         </button>
         <button className="button secondary" onClick={handleReset}>Reset</button>
       </div>
