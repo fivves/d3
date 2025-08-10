@@ -11,7 +11,7 @@ export function Log() {
   const [err, setErr] = useState('');
 
   function fireConfetti() {
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } });
   }
 
   async function submitNo() {
@@ -42,21 +42,21 @@ export function Log() {
 
   if (used === null) {
     return (
-      <div className="card" style={{ textAlign:'center' }}>
-        <h2>Did you use today?</h2>
-        <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
-          <button className="button" onClick={submitNo}>No</button>
-          <button className="button secondary" onClick={() => setUsed(true)}>Yes</button>
+      <div className="card gradient" style={{ textAlign:'center' }}>
+        <div className="card-title" style={{ justifyContent:'center' }}><span className="icon">🗓️</span>Did you use today?</div>
+        <div className="big-choices">
+          <button className="big-choice primary" onClick={submitNo}>No</button>
+          <button className="big-choice secondary" onClick={() => setUsed(true)}>Yes</button>
         </div>
-        {msg && <div style={{ marginTop: 8 }}>{msg}</div>}
+        {msg && <div style={{ marginTop: 12 }}>{msg}</div>}
         {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
       </div>
     );
   }
 
   return (
-    <div className="card" style={{ maxWidth: 520 }}>
-      <div className="heading">Tell us more</div>
+    <div className="card fancy" style={{ maxWidth: 540 }}>
+      <div className="card-title"><span className="icon">📝</span>Tell us more</div>
       <label>Context</label>
       <select value={context} onChange={(e)=>setContext(e.target.value)}>
         <option value="social">Social</option>

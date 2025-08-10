@@ -69,8 +69,8 @@ export function Prizes() {
 
   return (
     <div className="grid">
-      <div className="card">
-        <div className="heading">Add New Prize</div>
+      <div className="card fancy">
+        <div className="card-title"><span className="icon">🎁</span>Add New Prize</div>
         <form onSubmit={addPrize}>
           <label>Name</label>
           <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Massage" />
@@ -85,8 +85,8 @@ export function Prizes() {
         </form>
       </div>
 
-      <div className="card">
-        <div className="heading">Available</div>
+      <div className="card gradient">
+        <div className="card-title"><span className="icon">🛒</span>Available</div>
         <div className="grid">
           {available.map(p => (
             <div key={p.id} className="card" style={{ position: 'relative' }}>
@@ -106,8 +106,8 @@ export function Prizes() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="heading">Purchases</div>
+      <div className="card fancy">
+        <div className="card-title"><span className="icon">✅</span>Purchases</div>
         <div className="grid">
           {purchased.map(p => (
             <div key={p.id} className="card">

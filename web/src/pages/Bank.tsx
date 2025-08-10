@@ -17,45 +17,45 @@ export function Bank() {
 
   return (
     <div className="grid">
-      <div className="card">
-        <div className="heading">Points Balance</div>
-        <div className="row">
-          <div className="pill">Balance: <b>{summary?.balance ?? 0}</b></div>
-          <div className="pill">Earned: <b>{summary?.totals.earned ?? 0}</b></div>
-          <div className="pill">Spent: <b>{summary?.totals.spent ?? 0}</b></div>
+      <div className="card fancy">
+        <div className="card-title"><span className="icon">🏦</span>Points Balance</div>
+        <div className="stats">
+          <div><div className="stat-label">Balance</div><div className="stat-value">{summary?.balance ?? 0}</div></div>
+          <div><div className="stat-label">Earned</div><div className="stat-value positive">{summary?.totals.earned ?? 0}</div></div>
+          <div><div className="stat-label">Spent</div><div className="stat-value negative">{summary?.totals.spent ?? 0}</div></div>
         </div>
         <div style={{ height: 12 }} />
-        <div className="heading">Transactions</div>
-        <div>
+        <div className="card-title"><span className="icon">📄</span>Transactions</div>
+        <div className="list">
           {summary?.transactions.map(t => (
-            <div key={t.id} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #222' }}>
-              <div>
+            <div key={t.id} className="list-item">
+              <div className="left">
                 <div style={{ fontWeight: 600 }}>{t.type}</div>
                 <div className="sub">{new Date(t.date).toLocaleString()} {t.note ? `• ${t.note}` : ''}</div>
               </div>
-              <div style={{ fontWeight: 700, color: t.points >= 0 ? '#6ee7b7' : '#fda4af' }}>{t.points >= 0 ? `+${t.points}` : t.points}</div>
+              <div className={`stat-value ${t.points >= 0 ? 'positive' : 'negative'}`}>{t.points >= 0 ? `+${t.points}` : t.points}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="card">
-        <div className="heading">Money Saved Log</div>
-        <div className="row">
-          <div className="pill">Saved: <b>${((money?.saved ?? 0)/100).toFixed(2)}</b></div>
-          <div className="pill">Spent: <b>${((money?.spent ?? 0)/100).toFixed(2)}</b></div>
-          <div className="pill">Net: <b>${((money?.net ?? 0)/100).toFixed(2)}</b></div>
+      <div className="card gradient">
+        <div className="card-title"><span className="icon">💵</span>Money Saved</div>
+        <div className="stats">
+          <div><div className="stat-label">Saved</div><div className="stat-value positive">${((money?.saved ?? 0)/100).toFixed(2)}</div></div>
+          <div><div className="stat-label">Spent</div><div className="stat-value negative">${((money?.spent ?? 0)/100).toFixed(2)}</div></div>
+          <div><div className="stat-label">Net</div><div className="stat-value">${((money?.net ?? 0)/100).toFixed(2)}</div></div>
         </div>
         <div style={{ height: 12 }} />
-        <div className="heading">Entries</div>
-        <div>
+        <div className="card-title"><span className="icon">📄</span>Entries</div>
+        <div className="list">
           {money?.events.map((e:any) => (
-            <div key={e.id} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #222' }}>
-              <div>
+            <div key={e.id} className="list-item">
+              <div className="left">
                 <div style={{ fontWeight: 600 }}>{e.type}</div>
                 <div className="sub">{new Date(e.date).toLocaleString()} {e.note ? `• ${e.note}` : ''}</div>
               </div>
-              <div style={{ fontWeight: 700, color: e.amountCents >= 0 ? '#6ee7b7' : '#fda4af' }}>{e.amountCents >= 0 ? `+$${(e.amountCents/100).toFixed(2)}` : `-$${(Math.abs(e.amountCents)/100).toFixed(2)}`}</div>
+              <div className={`stat-value ${e.amountCents >= 0 ? 'positive' : 'negative'}`}>{e.amountCents >= 0 ? `+$${(e.amountCents/100).toFixed(2)}` : `-$${(Math.abs(e.amountCents)/100).toFixed(2)}`}</div>
             </div>
           ))}
         </div>

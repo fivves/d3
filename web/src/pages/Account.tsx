@@ -41,8 +41,8 @@ export function Account() {
   }
 
   return (
-    <div className="card" style={{ maxWidth: 640 }}>
-      <div className="heading">My Account</div>
+    <div className="card fancy" style={{ maxWidth: 640 }}>
+      <div className="card-title"><span className="icon">👤</span>My Account</div>
       <form onSubmit={save}>
         <label>First name</label>
         <input value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
@@ -62,7 +62,7 @@ export function Account() {
       </form>
 
       <div style={{ height: 16 }} />
-      <div className="heading">Danger zone</div>
+      <div className="card-title" style={{ marginTop: 16 }}><span className="icon">⚠️</span>Danger zone</div>
       <div className="sub">Resetting will erase your user, logs, points, prizes, and savings. This cannot be undone.</div>
       <div style={{ marginTop: 8 }}>
         <label>Type "RESET" to confirm</label>
