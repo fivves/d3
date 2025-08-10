@@ -13,16 +13,17 @@ export function Motivation() {
   return (
     <div className="grid">
       <div className="card gradient">
+        <div className="card-title"><span className="icon">🌊</span>Urge Surfing</div>
+        <UrgeSurfingWidget />
+      </div>
+
+      <div className="card gradient">
+        <MakeItObviousWidget />
+      </div>
+
+      <div className="card gradient">
         <div className="card-title"><span className="icon">🧠</span>Science‑based tools</div>
-        <div className="grid">
-          <div className="card">
-            <UrgeSurfingWidget />
-          </div>
-          <div className="card">
-            <MakeItObviousWidget />
-          </div>
-        </div>
-        <ul style={{ marginTop: 8 }}>
+        <ul>
           <li><b>Urge Surfing</b>: Cravings rise and fall like waves in ~10–20 minutes. Set a timer, breathe slowly (4s in, 6s out), and observe sensations without judgment until the wave passes.</li>
           <li><b>Implementation Intentions</b>: If‑Then plans reduce friction. Example: “If it’s 8pm and a craving hits, then I will make tea and take a 10‑minute walk.”</li>
           <li><b>Make It Obvious/Easy</b>: Remove triggers; stage your environment for success (water, protein snack, bedtime routine).</li>
@@ -31,6 +32,7 @@ export function Motivation() {
           <li><b>Sleep + Exercise</b>: 7–9h sleep and 20–30 min zone‑2 daily stabilize mood and cravings.</li>
         </ul>
       </div>
+
       <div className="card fancy">
         <div className="card-title"><span className="icon">💬</span>Quotes</div>
         <div className="grid">
