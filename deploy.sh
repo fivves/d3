@@ -24,11 +24,9 @@ docker compose build
 echo "Starting stack..."
 docker compose up -d
 
-echo "Running database migrations (or pushing schema if needed)..."
-if ! docker compose exec -T api npx prisma migrate deploy; then
-  echo "No migrations found. Pushing schema..."
-  docker compose exec -T api npx prisma db push
-fi
+echo "Applying database schema..."
+docker compose exec -T api npx prisma migrate deploy || true
+docker compose exec -T api npx prisma db push
 
 echo "Seeding quotes (idempotent)..."
 docker compose exec -T api node prisma/seed.js || true
