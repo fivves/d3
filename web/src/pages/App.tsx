@@ -61,7 +61,20 @@ export function App() {
         <p className="sub" style={{ marginBottom: 16 }}>This app is protected by a 4‑digit PIN.</p>
         <form onSubmit={login}>
           <label>PIN</label>
-          <input inputMode="numeric" pattern="\\d{4}" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value)} placeholder="1234" />
+          <input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]{4}"
+            title="Enter 4 digits"
+            autoComplete="one-time-code"
+            maxLength={4}
+            value={pin}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+              setPin(digits);
+            }}
+            placeholder="1234"
+          />
           {error && <div className="sub" style={{ color: '#f87171' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button className="button" type="submit">Unlock</button>
