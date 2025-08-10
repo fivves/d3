@@ -5,12 +5,13 @@ RUN apk add --no-cache openssl libc6-compat
 COPY package.json package-lock.json* ./
 RUN npm ci
 COPY tsconfig.json ./
+COPY tsconfig.build.json ./
 COPY prisma ./prisma
 COPY src ./src
 COPY prisma/seed.ts ./prisma/seed.ts
 ENV NODE_ENV=production
 RUN npx prisma generate --schema=./prisma/schema.prisma
-RUN npm run build
+RUN npx tsc -p tsconfig.build.json
 
 # Runtime stage
 FROM node:20-alpine
