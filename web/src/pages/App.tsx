@@ -88,7 +88,9 @@ export function App() {
   return (
     <>
       <nav className={`navbar ${menuOpen ? 'open' : ''}`}>
-        <div style={{ fontWeight: 800 }}>D3</div>
+        <NavLink to="/" style={{ display:'inline-flex', alignItems:'center' }}>
+          <img src="/icons/logo.png" alt="D3" style={{ height: 28, width: 'auto' }} />
+        </NavLink>
         <button className="hamburger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
         </button>
