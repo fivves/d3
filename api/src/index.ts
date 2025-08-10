@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 const uploadDir = path.join(process.cwd(), 'uploads');
-const upload = multer({ dest: uploadDir });
+const upload = multer({ storage: multer.memoryStorage() });
 app.use('/api/uploads', express.static(uploadDir));
 
 // Health
@@ -33,7 +33,8 @@ app.post('/api/setup', upload.single('avatar'), async (req, res) => {
   const { firstName, lastName, weeklySpendCents, startDate, pin } = req.body as any;
   const weekly = Number(weeklySpendCents) || 0;
   const pinHash = pin ? await hashPin(String(pin)) : null;
-  const avatarUrl = req.file ? `/api/uploads/${req.file.filename}` : undefined;
+  const avatarData = req.file ? req.file.buffer : undefined;
+  const avatarMimeType = req.file ? req.file.mimetype : undefined;
   const user = await prisma.user.create({
     data: {
       firstName,
@@ -41,11 +42,13 @@ app.post('/api/setup', upload.single('avatar'), async (req, res) => {
       weeklySpendCents: weekly,
       startDate: startDate ? new Date(startDate) : null,
       pinHash,
-      avatarUrl,
+      avatarData: avatarData as any,
+      avatarMimeType,
     },
   });
   const token = signToken({ userId: user.id });
-  res.json({ token, user });
+  const responseUser = { ...user, avatarUrl: `/api/users/${user.id}/avatar` } as any;
+  res.json({ token, user: responseUser });
 });
 
 // Login with pin
@@ -73,7 +76,8 @@ app.post('/api/auth/unlocked', async (_req, res) => {
 app.get('/api/me', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  res.json({ user });
+  const responseUser = user ? { ...user, avatarUrl: user.avatarData ? `/api/users/${user.id}/avatar` : user.avatarUrl } : null;
+  res.json({ user: responseUser });
 });
 
 app.put('/api/me', authMiddleware, upload.single('avatar'), async (req, res) => {
@@ -84,10 +88,14 @@ app.put('/api/me', authMiddleware, upload.single('avatar'), async (req, res) => 
   if (lastName !== undefined) data.lastName = lastName;
   if (weeklySpendCents !== undefined) data.weeklySpendCents = Number(weeklySpendCents) || 0;
   if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
-  if (req.file) data.avatarUrl = `/api/uploads/${req.file.filename}`;
+  if (req.file) {
+    data.avatarData = req.file.buffer as any;
+    data.avatarMimeType = req.file.mimetype;
+  }
   if (newPin !== undefined) data.pinHash = newPin ? await hashPin(String(newPin)) : null;
   const user = await prisma.user.update({ where: { id: userId }, data });
-  res.json({ user });
+  const responseUser = { ...user, avatarUrl: user.avatarData ? `/api/users/${user.id}/avatar` : user.avatarUrl } as any;
+  res.json({ user: responseUser });
 });
 
 // Logs and points
@@ -164,15 +172,24 @@ app.get('/api/savings', authMiddleware, async (req, res) => {
 app.get('/api/prizes', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const prizes = await prisma.prize.findMany({ where: { userId }, include: { purchases: true }, orderBy: { createdAt: 'desc' } });
-  res.json({ prizes });
+  const withUrls = prizes.map(p => ({
+    ...p,
+    imageUrl: p.imageData ? `/api/prizes/${p.id}/image` : p.imageUrl,
+  }));
+  res.json({ prizes: withUrls });
 });
 
 app.post('/api/prizes', authMiddleware, upload.single('image'), async (req, res) => {
   const userId = (req as any).userId as number;
   const { name, description, costPoints } = req.body as any;
-  const imageUrl = req.file ? `/api/uploads/${req.file.filename}` : null;
-  const prize = await prisma.prize.create({ data: { userId, name, description, costPoints: Number(costPoints) || 0, imageUrl } });
-  res.json({ prize });
+  const data: any = { userId, name, description, costPoints: Number(costPoints) || 0 };
+  if (req.file) {
+    data.imageData = req.file.buffer as any;
+    data.imageMimeType = req.file.mimetype;
+  }
+  const prize = await prisma.prize.create({ data });
+  const responsePrize = { ...prize, imageUrl: prize.imageData ? `/api/prizes/${prize.id}/image` : prize.imageUrl } as any;
+  res.json({ prize: responsePrize });
 });
 
 app.post('/api/prizes/:id/purchase', authMiddleware, async (req, res) => {
@@ -218,6 +235,26 @@ app.get('/api/motivation/random', async (_req, res) => {
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
   console.log(`API listening on :${port}`);
+});
+
+// Binary image routes
+app.get('/api/users/:id/avatar', async (req, res) => {
+  const id = Number(req.params.id);
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user || !user.avatarData) return res.status(404).end();
+  res.setHeader('Content-Type', user.avatarMimeType || 'application/octet-stream');
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(Buffer.from(user.avatarData as any));
+});
+
+app.get('/api/prizes/:id/image', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const id = Number(req.params.id);
+  const prize = await prisma.prize.findFirst({ where: { id, userId } });
+  if (!prize || !prize.imageData) return res.status(404).end();
+  res.setHeader('Content-Type', prize.imageMimeType || 'application/octet-stream');
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(Buffer.from(prize.imageData as any));
 });
 
 

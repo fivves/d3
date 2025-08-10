@@ -13,6 +13,8 @@ model User {
   lastName         String
   pinHash          String?
   avatarUrl        String?
+  avatarData       Bytes?
+  avatarMimeType   String?
   startDate        DateTime?
   weeklySpendCents Int           @default(0)
   createdAt        DateTime      @default(now())
@@ -56,6 +58,8 @@ model Prize {
   name        String
   description String?
   imageUrl    String?
+  imageData   Bytes?
+  imageMimeType String?
   costPoints  Int
   active      Boolean    @default(true)
   createdAt   DateTime   @default(now())
