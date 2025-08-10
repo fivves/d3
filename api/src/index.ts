@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 app.use(morgan('dev'));
 
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -334,6 +334,74 @@ app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
     prisma.prize.deleteMany({}),
     prisma.user.deleteMany({})
   ]);
+  res.json({ ok: true });
+});
+
+// Admin: backup/restore
+app.get('/api/admin/backup', authMiddleware, async (_req, res) => {
+  const [users, logs, txs, prizes, purchases, moneyEvents, quotes] = await Promise.all([
+    prisma.user.findMany({}),
+    prisma.dailyLog.findMany({}),
+    prisma.transaction.findMany({}),
+    prisma.prize.findMany({}),
+    prisma.purchase.findMany({}),
+    prisma.moneyEvent.findMany({}),
+    prisma.motivationQuote.findMany({}),
+  ]);
+  // Convert binary to base64
+  const usersOut = users.map((u:any) => ({
+    ...u,
+    avatarData: u.avatarData ? Buffer.from(u.avatarData as any).toString('base64') : null,
+  }));
+  const prizesOut = prizes.map((p:any) => ({
+    ...p,
+    imageData: p.imageData ? Buffer.from(p.imageData as any).toString('base64') : null,
+  }));
+  res.json({ users: usersOut, logs, transactions: txs, prizes: prizesOut, purchases, moneyEvents, quotes });
+});
+
+app.post('/api/admin/restore', authMiddleware, async (req, res) => {
+  const { users = [], logs = [], transactions = [], prizes = [], purchases = [], moneyEvents = [], quotes = [] } = req.body || {};
+  // Wipe current data (keep quotes will be replaced below)
+  await prisma.$transaction([
+    prisma.purchase.deleteMany({}),
+    prisma.transaction.deleteMany({}),
+    prisma.moneyEvent.deleteMany({}),
+    prisma.dailyLog.deleteMany({}),
+    prisma.prize.deleteMany({}),
+    prisma.user.deleteMany({}),
+    prisma.motivationQuote.deleteMany({}),
+  ]);
+
+  // Re-create with explicit IDs
+  const usersData = (users as any[]).map(u => ({
+    ...u,
+    avatarData: u.avatarData ? Buffer.from(u.avatarData, 'base64') : null,
+  }));
+  for (const u of usersData) await prisma.user.create({ data: u });
+
+  const prizesData = (prizes as any[]).map(p => ({
+    ...p,
+    imageData: p.imageData ? Buffer.from(p.imageData, 'base64') : null,
+  }));
+  for (const p of prizesData) await prisma.prize.create({ data: p });
+
+  for (const q of quotes as any[]) await prisma.motivationQuote.create({ data: q });
+  for (const l of logs as any[]) await prisma.dailyLog.create({ data: l });
+  for (const t of transactions as any[]) await prisma.transaction.create({ data: t });
+  for (const m of moneyEvents as any[]) await prisma.moneyEvent.create({ data: m });
+  for (const pc of purchases as any[]) await prisma.purchase.create({ data: pc });
+
+  // Advance sequences for Postgres (best-effort)
+  try {
+    const tables = [
+      '"User"', '"DailyLog"', '"Transaction"', '"Prize"', '"Purchase"', '"MoneyEvent"', '"MotivationQuote"'
+    ];
+    for (const t of tables) {
+      await prisma.$executeRawUnsafe(`SELECT setval(pg_get_serial_sequence(${t}, 'id'), COALESCE((SELECT MAX(id) FROM ${t}), 1));`);
+    }
+  } catch {}
+
   res.json({ ok: true });
 });
 
