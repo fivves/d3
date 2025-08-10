@@ -105,8 +105,8 @@ MIT
 
 ### Screenshots
 
-Home
-
 ![Home](screenshots/Screenshot%202025-08-09%20215135.png)
+![Bank](screenshots/Screenshot%202025-08-09%20215157.png)
+![Prizes](screenshots/Screenshot%202025-08-09%20215304.png)
 
 
