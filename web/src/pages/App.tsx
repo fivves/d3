@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import { useAppStore } from '../store';
 
@@ -37,6 +37,19 @@ export function App() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  const pageTitle = useMemo(() => {
+    const p = location.pathname;
+    if (p === '/') return 'Home';
+    if (p.startsWith('/motivation')) return 'Motivation';
+    if (p.startsWith('/bank')) return 'Bank';
+    if (p.startsWith('/prizes')) return 'Prizes';
+    if (p.startsWith('/log')) return 'Log';
+    if (p.startsWith('/account')) return 'My Account';
+    if (p.startsWith('/journal')) return 'Journal';
+    return '';
+  }, [location.pathname]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -94,6 +107,7 @@ export function App() {
         <button className="hamburger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>
           ☰
         </button>
+        {pageTitle && <div className="nav-center" aria-current="page">{pageTitle}</div>}
         <div className="nav-links" onClick={() => setMenuOpen(false)}>
           <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/">Home</NavLink>
           <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/motivation">Motivation</NavLink>
