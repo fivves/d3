@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int           @id @default(autoincrement())
+  firstName        String
+  lastName         String
+  pinHash          String?
+  avatarUrl        String?
+  startDate        DateTime?
+  weeklySpendCents Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  logs             DailyLog[]
+  transactions     Transaction[]
+  purchases        Purchase[]
+  moneyEvents      MoneyEvent[]
+}
+
+model DailyLog {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  date        DateTime
+  used        Boolean
+  context     String?
+  paid        Boolean?
+  amountCents Int?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+model Transaction {
+  id             Int       @id @default(autoincrement())
+  userId         Int
+  date           DateTime  @default(now())
+  points         Int
+  type           String
+  note           String?
+  relatedLogId   Int?
+  relatedPrizeId Int?
+  user           User      @relation(fields: [userId], references: [id])
+}
+
+model Prize {
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  name        String
+  description String?
+  imageUrl    String?
+  costPoints  Int
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id])
+  purchases   Purchase[]
+}
+
+model Purchase {
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  prizeId Int
+  date    DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id])
+  prize   Prize    @relation(fields: [prizeId], references: [id])
+}
+
+model MoneyEvent {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  date        DateTime @default(now())
+  amountCents Int
+  type        String
+  note        String?
+  relatedLogId Int?
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model MotivationQuote {
+  id      Int      @id @default(autoincrement())
+  text    String
+  author  String?
+  source  String?
+  createdAt DateTime @default(now())
+}
+
+
