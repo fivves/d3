@@ -5,6 +5,7 @@ type Prize = { id:number; name:string; description?:string|null; costPoints:numb
 
 export function Prizes() {
   const [prizes, setPrizes] = useState<Prize[]>([]);
+  const [bank, setBank] = useState<{ balance:number; totals:{ earned:number; spent:number } } | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [cost, setCost] = useState('');
@@ -39,6 +40,15 @@ export function Prizes() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get('/bank/summary');
+        setBank(data);
+      } catch {}
+    })();
+  }, []);
 
   async function addPrize(e: React.FormEvent) {
     e.preventDefault(); setErr('');
@@ -96,6 +106,14 @@ export function Prizes() {
 
   return (
     <div className="grid" style={{ position:'relative' }}>
+      <div className="card fancy">
+        <div className="card-title"><span className="icon">🏆</span>Points</div>
+        <div className="stats">
+          <div><div className="stat-label">Balance</div><div className="stat-value">{bank?.balance ?? 0}</div></div>
+          <div><div className="stat-label">Earned</div><div className="stat-value positive">{bank?.totals.earned ?? 0}</div></div>
+          <div><div className="stat-label">Spent</div><div className="stat-value negative">{bank?.totals.spent ?? 0}</div></div>
+        </div>
+      </div>
       <div className="card fancy">
         <div className="card-title"><span className="icon">🎁</span>Add New Prize</div>
         <form onSubmit={addPrize}>
