@@ -11,7 +11,7 @@ export function Setup() {
   const [lastName, setLastName] = useState('');
   const [pin, setPin] = useState('');
   const [avatar, setAvatar] = useState<File | null>(null);
-  const [startDate, setStartDate] = useState('');
+  // start date removed; now set automatically on finish
   const [weeklySpend, setWeeklySpend] = useState('');
   const [error, setError] = useState('');
 
@@ -31,7 +31,7 @@ export function Setup() {
     form.set('lastName', lastName);
     if (pin) form.set('pin', pin);
     if (avatar) form.set('avatar', avatar);
-    if (startDate) form.set('startDate', startDate);
+    // startDate is automatically set on server when finishing setup
     form.set('weeklySpendCents', String(Math.round((Number(weeklySpend) || 0) * 100)));
     try {
       const { data } = await api.post('/setup', form, { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -90,17 +90,6 @@ export function Setup() {
       )}
       {step === 3 && (
         <div className="card">
-          <div className="heading">Start date for quitting</div>
-          <label>Start date</label>
-          <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} />
-          <div style={{ display:'flex', gap:8, marginTop: 12 }}>
-            <button className="button secondary" onClick={back}>Back</button>
-            <button className="button" onClick={next}>Next</button>
-          </div>
-        </div>
-      )}
-      {step === 4 && (
-        <div className="card">
           <div className="heading">Weekly THC spend</div>
           <label>How much do you spend per week? (USD)</label>
           <input inputMode="decimal" value={weeklySpend} onChange={(e)=>setWeeklySpend(e.target.value)} placeholder="50" />
@@ -110,12 +99,12 @@ export function Setup() {
           </div>
         </div>
       )}
-      {step === 5 && (
+      {step === 4 && (
         <div className="card" style={{ textAlign: 'center' }}>
           <h2>Ready to begin?</h2>
           <p className="sub">You can change settings later in My Account.</p>
           {error && <div className="sub" style={{ color: '#f87171' }}>{error}</div>}
-          <button className="button" onClick={finish}>Begin my journey</button>
+          <button className="button" onClick={finish}>Start my journey</button>
         </div>
       )}
     </div>

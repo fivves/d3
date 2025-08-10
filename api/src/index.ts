@@ -30,7 +30,7 @@ app.get('/api/setup/status', async (_req, res) => {
 app.post('/api/setup', upload.single('avatar'), async (req, res) => {
   const existing = await prisma.user.findFirst();
   if (existing) return res.status(400).json({ error: 'Already set up' });
-  const { firstName, lastName, weeklySpendCents, startDate, pin } = req.body as any;
+  const { firstName, lastName, weeklySpendCents, pin } = req.body as any;
   const weekly = Number(weeklySpendCents) || 0;
   const pinHash = pin ? await hashPin(String(pin)) : null;
   const avatarData = req.file ? req.file.buffer : undefined;
@@ -40,7 +40,8 @@ app.post('/api/setup', upload.single('avatar'), async (req, res) => {
       firstName,
       lastName,
       weeklySpendCents: weekly,
-      startDate: startDate ? new Date(startDate) : null,
+      // Automatically set start date/time at account creation
+      startDate: new Date(),
       pinHash,
       avatarData: avatarData as any,
       avatarMimeType,

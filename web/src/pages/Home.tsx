@@ -90,6 +90,24 @@ export function Home() {
     return dayjs().startOf('day').diff(start.startOf('day'), 'day');
   }, [user]);
 
+  // Live count-up timer from startDate
+  const [now, setNow] = useState(dayjs());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(dayjs()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const elapsed = useMemo(() => {
+    if (!user?.startDate) return null;
+    const start = dayjs(user.startDate);
+    const diffMs = Math.max(0, now.diff(start));
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return { days, hours, minutes, seconds };
+  }, [now, user?.startDate]);
+
   return (
     <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
       <div className="hero" style={{ display:'flex', gap:16, alignItems:'center', justifyContent:'space-between' }}>
@@ -111,6 +129,19 @@ export function Home() {
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">⏱️</span>Time clean</div>
+          {elapsed ? (
+            <div className="time-clean">
+              <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">days</span></div>
+              <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">hrs</span></div>
+              <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">min</span></div>
+              <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">sec</span></div>
+            </div>
+          ) : (
+            <div className="sub">Start your journey to begin tracking.</div>
+          )}
+        </div>
         <div className="card fancy">
           <div className="card-title"><span className="icon">🏆</span>Points</div>
           <div className="stats">
