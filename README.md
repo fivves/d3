@@ -24,11 +24,11 @@ D3 helps you quit THC with daily logging, points, prizes, and motivation. It is 
    ```bash
    ./deploy.sh
    ```
-3. Open `http://localhost:8080` and complete the setup wizard.
+3. Open `http://localhost:7288` and complete the setup wizard.
 
 Services:
-- Web: `http://localhost:8080` (serves SPA; proxies `/api` to API)
-- API: proxied by web at `/api` (direct: `http://localhost:4000`)
+- Web: `http://localhost:7288` (serves SPA; proxies `/api` to API)
+- API: proxied by web at `/api` (direct: `http://localhost:7289`)
 - DB: Postgres (internal only)
 
 ### Local Development (optional)
