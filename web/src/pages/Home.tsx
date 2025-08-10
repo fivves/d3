@@ -156,6 +156,7 @@ export function Home() {
           <div className="stats">
             <div><div className="stat-label">Current</div><div className="stat-value">{streak} d</div></div>
             <div><div className="stat-label">Since start</div><div className="stat-value">{daysClean} d</div></div>
+            <div><div className="stat-label">Longest</div><div className="stat-value">{user?.longestStreakDays ?? 0} d</div></div>
           </div>
         </div>
 

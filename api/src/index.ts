@@ -140,6 +140,23 @@ app.post('/api/logs/daily', authMiddleware, async (req, res) => {
     ...moneyEvents.map((m) => prisma.moneyEvent.create({ data: m })),
   ]);
 
+  // Update longest streak if applicable (only when clean day)
+  if (!log.used) {
+    try {
+      const logs = await prisma.dailyLog.findMany({ where: { userId }, orderBy: { date: 'desc' } });
+      let current = 0;
+      for (const l of logs) {
+        if (l.used) break;
+        current += 1;
+      }
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const longest = Math.max(user?.longestStreakDays || 0, current);
+      if (longest !== (user?.longestStreakDays || 0)) {
+        await prisma.user.update({ where: { id: userId }, data: { longestStreakDays: longest } });
+      }
+    } catch {}
+  }
+
   res.json({ log });
 });
 
