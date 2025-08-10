@@ -105,31 +105,58 @@ export function Prizes() {
   }
 
   return (
-    <div className="grid" style={{ position:'relative' }}>
-      <div className="card fancy">
-        <div className="card-title"><span className="icon">🏆</span>Points</div>
-        <div className="stats">
-          <div><div className="stat-label">Balance</div><div className="stat-value">{bank?.balance ?? 0}</div></div>
-          <div><div className="stat-label">Earned</div><div className="stat-value positive">{bank?.totals.earned ?? 0}</div></div>
-          <div><div className="stat-label">Spent</div><div className="stat-value negative">{bank?.totals.spent ?? 0}</div></div>
+    <div className="grid" style={{ gridTemplateColumns: 'minmax(280px, 1fr) 2fr', alignItems:'start' }}>
+      {/* Left column: stacked cards */}
+      <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">🏆</span>Points</div>
+          <div className="stats">
+            <div><div className="stat-label">Balance</div><div className="stat-value">{bank?.balance ?? 0}</div></div>
+            <div><div className="stat-label">Earned</div><div className="stat-value positive">{bank?.totals.earned ?? 0}</div></div>
+            <div><div className="stat-label">Spent</div><div className="stat-value negative">{bank?.totals.spent ?? 0}</div></div>
+          </div>
+        </div>
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">🎁</span>Add New Prize</div>
+          <form onSubmit={addPrize}>
+            <label>Name</label>
+            <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Massage" />
+            <label>Description</label>
+            <input value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="60 minute massage" />
+            <label>Cost (points)</label>
+            <input inputMode="numeric" value={cost} onChange={(e)=>setCost(e.target.value)} placeholder="200" />
+            <label>Image</label>
+            <input type="file" accept="image/*" onChange={(e)=>setImage(e.target.files?.[0]||null)} />
+            <button className="button" type="submit">Add prize</button>
+            {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
+          </form>
+        </div>
+        <div className="card fancy" style={{ display:'flex', flexDirection:'column', minHeight: 320 }}>
+          <div className="card-title"><span className="icon">✅</span>Purchases</div>
+          <div style={{ flex:1, display:'flex' }}>
+            {purchased.length === 0 ? (
+              <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div className="card" style={{ textAlign:'center' }}>
+                  <div className="sub">No purchases yet. Purchase some to view them here.</div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid" style={{ width:'100%' }}>
+                {purchased.map(p => (
+                  <div key={p.id} className="card">
+                    {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
+                    <div style={{ fontWeight: 700 }}>{p.name}</div>
+                    <div className="sub">{p.description}</div>
+                    <button className="button secondary" onClick={()=>restock(p.id)}>Replace with new copy</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      <div className="card fancy">
-        <div className="card-title"><span className="icon">🎁</span>Add New Prize</div>
-        <form onSubmit={addPrize}>
-          <label>Name</label>
-          <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Massage" />
-          <label>Description</label>
-          <input value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="60 minute massage" />
-          <label>Cost (points)</label>
-          <input inputMode="numeric" value={cost} onChange={(e)=>setCost(e.target.value)} placeholder="200" />
-          <label>Image</label>
-          <input type="file" accept="image/*" onChange={(e)=>setImage(e.target.files?.[0]||null)} />
-          <button className="button" type="submit">Add prize</button>
-          {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
-        </form>
-      </div>
 
+      {/* Right column: available prizes, full height */}
       <div className="card gradient" style={{ display:'flex', flexDirection:'column', minHeight: 320 }}>
         <div className="card-title"><span className="icon">🛒</span>Available</div>
         <div style={{ flex:1, display:'flex' }}>
@@ -154,30 +181,6 @@ export function Prizes() {
                   <div className="sub">{p.description}</div>
                   <div className="pill" style={{ margin:'8px 0' }}>Cost: <b>{p.costPoints}</b></div>
                   <button className="button" onClick={()=>purchase(p.id)}>Buy</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="card fancy" style={{ display:'flex', flexDirection:'column', minHeight: 320 }}>
-        <div className="card-title"><span className="icon">✅</span>Purchases</div>
-        <div style={{ flex:1, display:'flex' }}>
-          {purchased.length === 0 ? (
-            <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <div className="card" style={{ textAlign:'center' }}>
-                <div className="sub">No purchases yet. Purchase some to view them here.</div>
-              </div>
-            </div>
-          ) : (
-            <div className="grid" style={{ width:'100%' }}>
-              {purchased.map(p => (
-                <div key={p.id} className="card">
-                  {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
-                  <div style={{ fontWeight: 700 }}>{p.name}</div>
-                  <div className="sub">{p.description}</div>
-                  <button className="button secondary" onClick={()=>restock(p.id)}>Replace with new copy</button>
                 </div>
               ))}
             </div>
