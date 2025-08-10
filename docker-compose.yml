@@ -29,7 +29,7 @@ services:
     volumes:
       - ./api/uploads:/app/uploads
     ports:
-      - "${API_PORT:-7289}:4000"
+      - "7289:4000"
 
   web:
     build: ./web
@@ -37,7 +37,7 @@ services:
     depends_on:
       - api
     ports:
-      - "${WEB_PORT:-7288}:80"
+      - "7288:80"
 
 volumes:
   db_data:
