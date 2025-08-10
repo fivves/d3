@@ -122,7 +122,7 @@ export default function DailyJournalWidget() {
         <button className="button" onClick={save} disabled={saving || locked}>{buttonLabel}</button>
         {locked && <div className="sub">Locked for today. Come back tomorrow.</div>}
       </div>
-      <div style={{ display:'flex', gap:8, marginTop:12 }}>
+      <div style={{ display:'flex', gap:8, marginTop:12, justifyContent:'center' }}>
         <div className="pill">First journal entry today earns +1 point</div>
       </div>
       {message && <div style={{ marginTop:8 }}>{message}</div>}

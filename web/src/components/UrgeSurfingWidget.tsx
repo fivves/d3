@@ -123,8 +123,8 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
       <div className="sub" style={{ textAlign: 'center' }}>
         Breathe slowly. Notice sensations rise and fall like a wave.
       </div>
-
-      <div style={{ display:'flex', gap:8, marginTop:12 }}>
+ 
+      <div style={{ display:'flex', gap:8, marginTop:12, justifyContent:'center' }}>
         <div className="pill">Complete 15 minutes to earn +1 point</div>
       </div>
     </div>

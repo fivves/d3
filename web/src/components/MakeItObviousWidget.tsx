@@ -203,7 +203,7 @@ export default function MakeItObviousWidget() {
         ))}
       </div>
 
-      <div style={{ display:'flex', gap:8, marginTop:12 }}>
+      <div style={{ display:'flex', gap:8, marginTop:12, justifyContent:'center' }}>
         <div className="pill">{allDone ? 'All done! +1 point will be awarded' : 'Complete all to earn +1 point'}</div>
       </div>
     </div>
