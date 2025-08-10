@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import api from '../lib/api';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 type TodayLog = {
   id: number;
@@ -22,6 +22,10 @@ export default function DailyJournalWidget() {
   const [text, setText] = useState('');
   const [mood, setMood] = useState<number | ''>('');
   const [locked, setLocked] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [buttonLabel, setButtonLabel] = useState<'Save' | 'Saving...' | 'Saved!' | 'Edit'>('Save');
+  const labelTimerRef = useRef<number | null>(null);
 
   const dateLabel = useMemo(() => dayjs().format('ddd, MMM D'), []);
 
@@ -33,23 +37,53 @@ export default function DailyJournalWidget() {
         setToday(log);
         setText(log?.journal ?? '');
         setMood((log?.mood ?? '') as any);
+        setError('');
+        // If user already has content for today, show Edit state
+        if ((log?.journal && log.journal.length > 0) || (typeof log?.mood === 'number')) {
+          setButtonLabel('Edit');
+        }
       } finally {
         setLoading(false);
       }
     }
     load();
 
-    const timer = window.setTimeout(() => {
-      setLocked(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        if (!locked) {
+          // Auto-save before locking if there is content or mood
+          const hasContent = (text.trim().length > 0) || (mood !== '' && mood != null);
+          if (hasContent) {
+            await api.put('/journal/today', { journal: text.trim() || null, mood: mood === '' ? null : Number(mood) });
+          }
+        }
+      } catch (_) {
+        // Ignore auto-save failure at midnight
+      } finally {
+        setLocked(true);
+        setButtonLabel('Save');
+      }
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
   }, []);
 
   async function save() {
     setSaving(true);
+    setMessage('');
+    setError('');
     try {
+      setButtonLabel('Saving...');
       const { data } = await api.put('/journal/today', { journal: text.trim() || null, mood: mood === '' ? null : Number(mood) });
       setToday(data.log);
+      setButtonLabel('Saved!');
+      if (labelTimerRef.current) window.clearTimeout(labelTimerRef.current);
+      labelTimerRef.current = window.setTimeout(() => {
+        setButtonLabel('Edit');
+      }, 3000) as unknown as number;
+    } catch (e: any) {
+      const errMsg = e?.response?.data?.error || 'Failed to save. If this is a new install, migrations may be pending.';
+      setError(errMsg);
+      setButtonLabel('Save');
     } finally {
       setSaving(false);
     }
@@ -85,9 +119,11 @@ export default function DailyJournalWidget() {
         style={{ width:'100%', resize:'vertical' }}
       />
       <div style={{ display:'flex', gap:8, marginTop:8 }}>
-        <button className="button" onClick={save} disabled={saving || locked}>Save</button>
+        <button className="button" onClick={save} disabled={saving || locked}>{buttonLabel}</button>
         {locked && <div className="sub">Locked for today. Come back tomorrow.</div>}
       </div>
+      {message && <div style={{ marginTop:8 }}>{message}</div>}
+      {error && <div className="sub" style={{ marginTop:4, color:'#f87171' }}>{error}</div>}
     </div>
   );
 }
