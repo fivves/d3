@@ -20,13 +20,17 @@ export function Prizes() {
       window.clearTimeout(hideToastTimerRef.current);
       hideToastTimerRef.current = null;
     }
+    // Mount toast in hidden state first, then promote to visible on next frame
     setToast(msg);
-    setToastVisible(true);
-    hideToastTimerRef.current = window.setTimeout(() => {
-      setToastVisible(false);
-      // Wait for slide-down animation
-      window.setTimeout(() => setToast(''), 300);
-    }, 3000) as unknown as number;
+    setToastVisible(false);
+    requestAnimationFrame(() => {
+      setToastVisible(true);
+      hideToastTimerRef.current = window.setTimeout(() => {
+        setToastVisible(false);
+        // Wait for slide-down animation to finish before unmounting
+        window.setTimeout(() => setToast(''), 300);
+      }, 3000) as unknown as number;
+    });
   }
 
   async function load() {
