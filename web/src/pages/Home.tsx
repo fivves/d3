@@ -145,19 +145,23 @@ export function Home() {
       {/* At-a-glance widgets */}
       <div className="grid">
         <div className="card gradient">
-          <div className="card-title"><span className="icon">📓</span>Today’s Journal</div>
+          <div className="card-title" style={{ justifyContent:'space-between' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span className="icon">📓</span>Today’s Journal
+            </div>
+            {moodValue !== null && (
+              <div className="mood-chip" aria-label={`Mood ${moodValue} out of 5`}>
+                <span className="mood-label">Mood</span>
+                <div className="mood-dots">
+                  {[1,2,3,4,5].map((n) => (
+                    <span key={n} className={`dot ${moodValue >= n ? 'on' : ''}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           {journal ? (
             <>
-              {moodValue !== null && (
-                <div className="mood-chip" aria-label={`Mood ${moodValue} out of 5`}>
-                  <span className="mood-label">Mood</span>
-                  <div className="mood-dots">
-                    {[1,2,3,4,5].map((n) => (
-                      <span key={n} className={`dot ${moodValue >= n ? 'on' : ''}`} />
-                    ))}
-                  </div>
-                </div>
-              )}
               {journal.journal ? (
                 <div className="sub truncate" style={{ marginTop: 8 }}>{journal.journal}</div>
               ) : (
