@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../lib/api';
 
 type Prize = { id:number; name:string; description?:string|null; costPoints:number; imageUrl?:string|null; active:boolean; purchases:any[] };
@@ -11,6 +11,23 @@ export function Prizes() {
   const [image, setImage] = useState<File | null>(null);
   const [err, setErr] = useState('');
   const [toast, setToast] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const hideToastTimerRef = useRef<number | null>(null);
+
+  function showToast(msg: string) {
+    // Clear any previous timers to avoid overlap
+    if (hideToastTimerRef.current) {
+      window.clearTimeout(hideToastTimerRef.current);
+      hideToastTimerRef.current = null;
+    }
+    setToast(msg);
+    setToastVisible(true);
+    hideToastTimerRef.current = window.setTimeout(() => {
+      setToastVisible(false);
+      // Wait for slide-down animation
+      window.setTimeout(() => setToast(''), 300);
+    }, 3000) as unknown as number;
+  }
 
   async function load() {
     const { data } = await api.get('/prizes');
@@ -43,8 +60,7 @@ export function Prizes() {
     } catch (e:any) {
       const msg = e?.response?.data?.error || 'Failed to purchase';
       if (String(msg).toLowerCase().includes('insufficient')) {
-        setToast('Insufficient points');
-        window.setTimeout(() => setToast(''), 3000);
+        showToast('Insufficient points');
       } else {
         setErr(msg);
       }
@@ -147,9 +163,9 @@ export function Prizes() {
         </div>
       </div>
 
-      {toast && (
+      {(toast || toastVisible) && (
         <div className="toast-container" role="status" aria-live="polite">
-          <div className="toast danger">{toast}</div>
+          <div className={`toast danger ${toastVisible ? 'show' : 'hide'}`}>{toast}</div>
         </div>
       )}
     </div>
