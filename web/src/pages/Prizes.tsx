@@ -85,49 +85,53 @@ export function Prizes() {
         </form>
       </div>
 
-      <div className="card gradient">
+      <div className="card gradient" style={{ display:'flex', flexDirection:'column', minHeight: 320 }}>
         <div className="card-title"><span className="icon">🛒</span>Available</div>
-        <div className="grid">
+        <div style={{ flex:1, display:'flex' }}>
           {available.length === 0 ? (
-            <div className="card" style={{ textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', minHeight: 140 }}>
+            <div style={{ flex:1, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
               <div className="sub">No prizes available. Add some to view them here.</div>
             </div>
           ) : (
-            available.map(p => (
-              <div key={p.id} className="card" style={{ position: 'relative' }}>
-                <button
-                  onClick={()=>removePrize(p.id)}
-                  title="Delete prize"
-                  style={{ position:'absolute', top:8, right:8, background:'transparent', border:'none', color:'#f87171', cursor:'pointer' }}
-                  aria-label={`Delete ${p.name}`}
-                >🗑️</button>
-                {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
-                <div style={{ fontWeight: 700 }}>{p.name}</div>
-                <div className="sub">{p.description}</div>
-                <div className="pill" style={{ margin:'8px 0' }}>Cost: <b>{p.costPoints}</b></div>
-                <button className="button" onClick={()=>purchase(p.id)}>Buy</button>
-              </div>
-            ))
+            <div className="grid" style={{ width:'100%' }}>
+              {available.map(p => (
+                <div key={p.id} className="card" style={{ position: 'relative' }}>
+                  <button
+                    onClick={()=>removePrize(p.id)}
+                    title="Delete prize"
+                    style={{ position:'absolute', top:8, right:8, background:'transparent', border:'none', color:'#f87171', cursor:'pointer' }}
+                    aria-label={`Delete ${p.name}`}
+                  >🗑️</button>
+                  {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
+                  <div style={{ fontWeight: 700 }}>{p.name}</div>
+                  <div className="sub">{p.description}</div>
+                  <div className="pill" style={{ margin:'8px 0' }}>Cost: <b>{p.costPoints}</b></div>
+                  <button className="button" onClick={()=>purchase(p.id)}>Buy</button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      <div className="card fancy">
+      <div className="card fancy" style={{ display:'flex', flexDirection:'column', minHeight: 320 }}>
         <div className="card-title"><span className="icon">✅</span>Purchases</div>
-        <div className="grid">
+        <div style={{ flex:1, display:'flex' }}>
           {purchased.length === 0 ? (
-            <div className="card" style={{ textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', minHeight: 140 }}>
+            <div style={{ flex:1, textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center' }}>
               <div className="sub">No purchases yet. Purchase some to view them here.</div>
             </div>
           ) : (
-            purchased.map(p => (
-              <div key={p.id} className="card">
-                {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
-                <div style={{ fontWeight: 700 }}>{p.name}</div>
-                <div className="sub">{p.description}</div>
-                <button className="button secondary" onClick={()=>restock(p.id)}>Replace with new copy</button>
-              </div>
-            ))
+            <div className="grid" style={{ width:'100%' }}>
+              {purchased.map(p => (
+                <div key={p.id} className="card">
+                  {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
+                  <div style={{ fontWeight: 700 }}>{p.name}</div>
+                  <div className="sub">{p.description}</div>
+                  <button className="button secondary" onClick={()=>restock(p.id)}>Replace with new copy</button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
