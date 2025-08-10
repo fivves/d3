@@ -8,7 +8,7 @@ COPY tsconfig.json ./
 COPY tsconfig.build.json ./
 COPY prisma ./prisma
 COPY src ./src
-COPY prisma/seed.ts ./prisma/seed.ts
+COPY prisma/seed.js ./prisma/seed.js
 ENV NODE_ENV=production
 RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npx tsc -p tsconfig.build.json
