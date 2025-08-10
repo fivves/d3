@@ -36,6 +36,7 @@ export function App() {
 
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -86,16 +87,21 @@ export function App() {
 
   return (
     <>
-      <nav className="navbar">
+      <nav className={`navbar ${menuOpen ? 'open' : ''}`}>
         <div style={{ fontWeight: 800 }}>D3</div>
-        <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/">Home</NavLink>
-        <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/log">Log</NavLink>
-        <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/bank">Bank</NavLink>
-        <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/prizes">Prizes</NavLink>
-        <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/motivation">Motivation</NavLink>
-        <div className="spacer" />
-        <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/account">My Account</NavLink>
-        <button className="button secondary" onClick={logout}>Lock</button>
+        <button className="hamburger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>
+          ☰
+        </button>
+        <div className="nav-links" onClick={() => setMenuOpen(false)}>
+          <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/">Home</NavLink>
+          <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/log">Log</NavLink>
+          <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/bank">Bank</NavLink>
+          <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/prizes">Prizes</NavLink>
+          <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/motivation">Motivation</NavLink>
+          <div className="spacer" />
+          <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/account">My Account</NavLink>
+          <button className="button secondary" onClick={logout}>Lock</button>
+        </div>
       </nav>
       <div className="container">
         <Outlet />
