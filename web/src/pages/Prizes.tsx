@@ -57,6 +57,16 @@ export function Prizes() {
   const available = prizes.filter(p => p.active);
   const purchased = prizes.filter(p => !p.active);
 
+  async function removePrize(id:number) {
+    setErr('');
+    try {
+      await api.delete(`/prizes/${id}`);
+      await load();
+    } catch (e:any) {
+      setErr(e?.response?.data?.error || 'Failed to delete prize');
+    }
+  }
+
   return (
     <div className="grid">
       <div className="card">
@@ -79,7 +89,13 @@ export function Prizes() {
         <div className="heading">Available</div>
         <div className="grid">
           {available.map(p => (
-            <div key={p.id} className="card">
+            <div key={p.id} className="card" style={{ position: 'relative' }}>
+              <button
+                onClick={()=>removePrize(p.id)}
+                title="Delete prize"
+                style={{ position:'absolute', top:8, right:8, background:'transparent', border:'none', color:'#f87171', cursor:'pointer' }}
+                aria-label={`Delete ${p.name}`}
+              >🗑️</button>
               {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
               <div style={{ fontWeight: 700 }}>{p.name}</div>
               <div className="sub">{p.description}</div>

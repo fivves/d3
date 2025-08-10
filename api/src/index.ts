@@ -222,6 +222,19 @@ app.post('/api/prizes/:id/restock', authMiddleware, async (req, res) => {
   res.json({ prize: updated });
 });
 
+// Delete prize (and its purchases)
+app.delete('/api/prizes/:id', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const id = Number(req.params.id);
+  const prize = await prisma.prize.findFirst({ where: { id, userId } });
+  if (!prize) return res.status(404).json({ error: 'Not found' });
+  await prisma.$transaction([
+    prisma.purchase.deleteMany({ where: { prizeId: id, userId } }),
+    prisma.prize.delete({ where: { id } })
+  ]);
+  res.json({ ok: true });
+});
+
 // Motivation quotes
 app.get('/api/motivation/quotes', async (_req, res) => {
   const quotes = await prisma.motivationQuote.findMany({ orderBy: { id: 'asc' } });
