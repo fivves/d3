@@ -100,7 +100,7 @@ export function App() {
 
   return (
     <>
-      <nav className={`navbar ${menuOpen ? 'open' : ''}`}>
+      <nav className={`navbar ${menuOpen ? 'open' : ''}`} style={{ position:'relative' }}>
         <NavLink to="/" style={{ display:'inline-flex', alignItems:'center' }}>
           <img src="/icons/logo.png" alt="D3" style={{ height: 28, width: 'auto' }} />
         </NavLink>
