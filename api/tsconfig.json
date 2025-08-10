@@ -10,7 +10,8 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src", "prisma/seed.ts", "scripts"]
+  "include": ["src"],
+  "exclude": ["prisma/seed.ts", "scripts"]
 }
 
 

@@ -31,7 +31,8 @@ if ! docker compose exec -T api npx prisma migrate deploy; then
 fi
 
 echo "Seeding quotes (idempotent)..."
-docker compose exec -T api node dist/prisma/seed.js || true
+docker compose exec -T api node -e "(async()=>{try{require('fs');}catch(e){} })()" >/dev/null 2>&1 || true
+docker compose exec -T api npx ts-node prisma/seed.ts || true
 
 echo "D3 is up. Visit http://localhost:${WEB_PORT:-8080}"
 
