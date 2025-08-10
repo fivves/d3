@@ -250,10 +250,9 @@ app.get('/api/users/:id/avatar', async (req, res) => {
   res.send(Buffer.from(user.avatarData as any));
 });
 
-app.get('/api/prizes/:id/image', authMiddleware, async (req, res) => {
-  const userId = (req as any).userId as number;
+app.get('/api/prizes/:id/image', async (req, res) => {
   const id = Number(req.params.id);
-  const prize = await prisma.prize.findFirst({ where: { id, userId } });
+  const prize = await prisma.prize.findUnique({ where: { id } });
   if (!prize || !prize.imageData) return res.status(404).end();
   res.setHeader('Content-Type', prize.imageMimeType || 'application/octet-stream');
   res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
