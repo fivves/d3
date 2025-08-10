@@ -10,6 +10,7 @@ export function Prizes() {
   const [cost, setCost] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [err, setErr] = useState('');
+  const [toast, setToast] = useState<string>('');
 
   async function load() {
     const { data } = await api.get('/prizes');
@@ -40,7 +41,13 @@ export function Prizes() {
       await api.post(`/prizes/${id}/purchase`);
       await load();
     } catch (e:any) {
-      setErr(e?.response?.data?.error || 'Failed to purchase');
+      const msg = e?.response?.data?.error || 'Failed to purchase';
+      if (String(msg).toLowerCase().includes('insufficient')) {
+        setToast('Insufficient points');
+        window.setTimeout(() => setToast(''), 3000);
+      } else {
+        setErr(msg);
+      }
     }
   }
 
@@ -68,7 +75,7 @@ export function Prizes() {
   }
 
   return (
-    <div className="grid">
+    <div className="grid" style={{ position:'relative' }}>
       <div className="card fancy">
         <div className="card-title"><span className="icon">🎁</span>Add New Prize</div>
         <form onSubmit={addPrize}>
@@ -139,6 +146,12 @@ export function Prizes() {
           )}
         </div>
       </div>
+
+      {toast && (
+        <div className="toast-container" role="status" aria-live="polite">
+          <div className="toast danger">{toast}</div>
+        </div>
+      )}
     </div>
   );
 }

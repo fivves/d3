@@ -93,4 +93,9 @@ form { display: grid; gap: 12px; }
 .blog-body { margin:8px 0 0; line-height:1.6; color: var(--text); white-space: pre-wrap; }
 .mood-badge { display:inline-block; margin-top:4px; font-size:12px; color:var(--muted); }
 
+/* Toast */
+.toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50; }
+.toast { padding: 10px 14px; border-radius: 12px; border:1px solid #223; background: linear-gradient(180deg, rgba(17,24,39,.9), rgba(17,24,39,.75)); box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.toast.danger { background: linear-gradient(180deg, rgba(127,29,29,.25), rgba(17,24,39,.8)); border-color:#3b1d1d; color:#fecaca; }
+
 
