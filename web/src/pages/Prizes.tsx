@@ -14,6 +14,11 @@ export function Prizes() {
   const [toast, setToast] = useState<string>('');
   const [toastVisible, setToastVisible] = useState<boolean>(false);
   const hideToastTimerRef = useRef<number | null>(null);
+  const [editing, setEditing] = useState<Prize | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editCost, setEditCost] = useState('');
+  const [editErr, setEditErr] = useState('');
 
   function showToast(msg: string) {
     // Clear any previous timers to avoid overlap
@@ -81,24 +86,27 @@ export function Prizes() {
     }
   }
 
-  function editPrizePrompt(p: Prize) {
-    const name = (window.prompt('Name', p.name) ?? p.name);
-    const descriptionDefault = p.description || '';
-    const description = (window.prompt('Description', descriptionDefault) ?? descriptionDefault);
-    const costStrDefault = String(p.costPoints);
-    const costStr = (window.prompt('Cost (points)', costStrDefault) ?? costStrDefault);
-    const costPoints = Math.round(Number(costStr) || 0);
-    return { name, description, costPoints };
+  function openEdit(p: Prize) {
+    setEditErr('');
+    setEditing(p);
+    setEditName(p.name);
+    setEditDescription(p.description || '');
+    setEditCost(String(p.costPoints));
   }
 
-  async function editPrize(p: Prize) {
-    setErr('');
+  async function saveEdit() {
+    if (!editing) return;
+    setEditErr('');
     try {
-      const edits = editPrizePrompt(p);
-      await api.put(`/prizes/${p.id}`, edits);
+      await api.put(`/prizes/${editing.id}`, {
+        name: editName,
+        description: editDescription,
+        costPoints: Math.round(Number(editCost) || 0)
+      });
+      setEditing(null);
       await load();
     } catch (e:any) {
-      setErr(e?.response?.data?.error || 'Failed to update prize');
+      setEditErr(e?.response?.data?.error || 'Failed to update prize');
     }
   }
 
@@ -203,10 +211,15 @@ export function Prizes() {
                   <div className="pill" style={{ margin:'8px 0' }}>Cost: <b>{p.costPoints}</b></div>
                 <div style={{ display:'flex', gap:8 }}>
                   <button className="button" onClick={()=>purchase(p.id)}>
-                    <span aria-hidden>🛒</span> Buy
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                      <path d="M7 4h-2l-1 2h-2v2h2l3.6 7.59-1.35 2.44c-.16.28-.25.61-.25.97a2 2 0 1 0 2-2h6a2 2 0 1 0 2 2h2v-2h-2l-1-2h-8.1l.9-1.6h6.7c.75 0 1.41-.41 1.75-1.03l3.58-6.48-1.74-.97-3.58 6.48h-7.17l-1.1-2h9.85v-2h-11z"/>
+                    </svg>
+                    <span style={{ marginLeft:6 }}>Buy</span>
                   </button>
-                  <button className="button secondary" title="Edit" aria-label={`Edit ${p.name}`} onClick={()=>editPrize(p)}>
-                    ✏️
+                  <button className="button secondary" title="Edit" aria-label={`Edit ${p.name}`} onClick={()=>openEdit(p)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 2.33l-.84-.84 9.9-9.9.84.84-9.9 9.9zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
                   </button>
                 </div>
                 </div>
@@ -219,6 +232,25 @@ export function Prizes() {
       {(toast || toastVisible) && (
         <div className="toast-container" role="status" aria-live="polite">
           <div className={`toast danger ${toastVisible ? 'show' : 'hide'}`}>{toast}</div>
+        </div>
+      )}
+
+      {editing && (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal">
+            <div className="modal-title">Edit prize</div>
+            <label>Name</label>
+            <input value={editName} onChange={(e)=>setEditName(e.target.value)} />
+            <label>Description</label>
+            <input value={editDescription} onChange={(e)=>setEditDescription(e.target.value)} />
+            <label>Cost (points)</label>
+            <input inputMode="numeric" value={editCost} onChange={(e)=>setEditCost(e.target.value)} />
+            {editErr && <div className="sub" style={{ color:'#f87171' }}>{editErr}</div>}
+            <div className="modal-actions">
+              <button className="button secondary" onClick={()=>setEditing(null)}>Cancel</button>
+              <button className="button" onClick={saveEdit}>Save</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

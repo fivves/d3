@@ -134,4 +134,10 @@ form { display: grid; gap: 12px; }
 .toast.hide { transform: translateY(16px); opacity: 0; }
 .toast.danger { background: linear-gradient(180deg, rgba(127,29,29,.25), rgba(17,24,39,.8)); border-color:#3b1d1d; color:#fecaca; }
 
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:60; }
+.modal { width: 100%; max-width: 460px; background: var(--card); border:1px solid #222; border-radius:16px; padding:16px; }
+.modal-title { font-weight:800; margin-bottom:10px; }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
 
