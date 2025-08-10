@@ -7,6 +7,7 @@ type User = {
   avatarUrl?: string | null;
   weeklySpendCents: number;
   startDate?: string | null;
+  longestStreakDays?: number;
 };
 
 interface AppState {
