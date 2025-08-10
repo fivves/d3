@@ -163,16 +163,24 @@ export function Home() {
           </div>
         </div>
 
-        <div className="card gradient">
-          <div className="card-title"><span className="icon">👀</span>Make it Obvious</div>
-          <div className="sub">{mioProgress.done}/{mioProgress.total} completed today</div>
-          <div style={{ marginTop: 12 }}><Link className="button" to="/motivation">Continue checklist</Link></div>
+        <div className="card gradient" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div>
+            <div className="card-title"><span className="icon">👀</span>Make it Obvious</div>
+            <div className="sub">{mioProgress.done}/{mioProgress.total} completed today</div>
+          </div>
+          <div style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>
+            <Link className="button" to="/motivation">Continue checklist</Link>
+          </div>
         </div>
 
-        <div className="card gradient">
-          <div className="card-title"><span className="icon">🌊</span>Urge Surfing</div>
-          <div className="sub">Cravings rise and fall like waves. Ride one for 10 minutes.</div>
-          <div style={{ marginTop: 12 }}><Link className="button" to="/motivation">Start 10‑min surf</Link></div>
+        <div className="card gradient" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div>
+            <div className="card-title"><span className="icon">🌊</span>Urge Surfing</div>
+            <div className="sub">Cravings rise and fall like waves. Ride one for 15 minutes.</div>
+          </div>
+          <div style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>
+            <Link className="button" to="/motivation">Start 15‑min surf</Link>
+          </div>
         </div>
       </div>
     </div>
