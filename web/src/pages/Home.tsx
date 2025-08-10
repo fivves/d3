@@ -35,6 +35,7 @@ export function Home() {
   const [logs, setLogs] = useState<any[]>([]);
   const [journal, setJournal] = useState<{ journal?: string | null; mood?: number | null } | null>(null);
   const [mioProgress, setMioProgress] = useState<{ done: number; total: number }>({ done: 0, total: 6 });
+  const moodValue: number | null = typeof journal?.mood === 'number' ? (journal!.mood as number) : null;
 
   useEffect(() => {
     (async () => {
@@ -147,12 +148,12 @@ export function Home() {
           <div className="card-title"><span className="icon">📓</span>Today’s Journal</div>
           {journal ? (
             <>
-              {typeof journal.mood === 'number' && (
-                <div className="mood-chip" aria-label={`Mood ${journal.mood} out of 5`}>
+              {moodValue !== null && (
+                <div className="mood-chip" aria-label={`Mood ${moodValue} out of 5`}>
                   <span className="mood-label">Mood</span>
                   <div className="mood-dots">
                     {[1,2,3,4,5].map((n) => (
-                      <span key={n} className={`dot ${journal.mood >= n ? 'on' : ''}`} />
+                      <span key={n} className={`dot ${moodValue >= n ? 'on' : ''}`} />
                     ))}
                   </div>
                 </div>
