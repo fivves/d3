@@ -179,7 +179,7 @@ export default function MakeItObviousWidget() {
   return (
     <div>
       <div className="card-title"><span className="icon">👀</span>Make it Obvious</div>
-      <div className="sub" style={{ marginBottom: 8 }}>Daily checklist resets at midnight. Complete all to earn +1 point.</div>
+      <div className="sub" style={{ marginBottom: 8 }}>Daily checklist resets at midnight.</div>
       <div className="list">
         {items.map((it, idx) => (
           <div key={it.id} className="list-item">
