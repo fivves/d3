@@ -110,32 +110,34 @@ export function Home() {
 
   return (
     <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
-      <div className="hero" style={{ display:'flex', gap:16, alignItems:'center', justifyContent:'space-between' }}>
-        <div style={{ display:'flex', gap:16, alignItems:'center' }}>
-          <div className="icon-bubble" aria-hidden>{timeIcon()}</div>
+      <div className="hero home-hero">
+        <div className="left">
+          {user?.avatarUrl && (
+            <img
+              src={user.avatarUrl}
+              alt="avatar"
+              className="avatar-glow"
+              style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
+            />
+          )}
           <div>
-            <div className="hero-row">
-              <div style={{ fontSize: 22, fontWeight: 800 }}>{greeting()} {user?.firstName}</div>
-              {elapsed && (
-                <div className="time-clean compact">
-                  <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">d</span></div>
-                  <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">h</span></div>
-                  <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">m</span></div>
-                  <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">s</span></div>
-                </div>
-              )}
-            </div>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>{greeting()} {user?.firstName}</div>
             <div className="sub">Every choice counts. Keep stacking wins.</div>
           </div>
         </div>
-        {user?.avatarUrl && (
-          <img
-            src={user.avatarUrl}
-            alt="avatar"
-            className="avatar-glow"
-            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }}
-          />
-        )}
+        <div className="right">
+          <span className="clean-label">CLEAN FOR</span>
+          {elapsed ? (
+            <div className="time-clean compact">
+              <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">d</span></div>
+              <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">h</span></div>
+              <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">m</span></div>
+              <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">s</span></div>
+            </div>
+          ) : (
+            <div className="sub">—</div>
+          )}
+        </div>
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
