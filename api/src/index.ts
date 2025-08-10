@@ -248,6 +248,19 @@ app.get('/api/motivation/random', async (_req, res) => {
   res.json({ quote: one });
 });
 
+// Admin: reset database (keep quotes)
+app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
+  await prisma.$transaction([
+    prisma.purchase.deleteMany({}),
+    prisma.transaction.deleteMany({}),
+    prisma.moneyEvent.deleteMany({}),
+    prisma.dailyLog.deleteMany({}),
+    prisma.prize.deleteMany({}),
+    prisma.user.deleteMany({})
+  ]);
+  res.json({ ok: true });
+});
+
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
   console.log(`API listening on :${port}`);

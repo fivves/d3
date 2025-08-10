@@ -78,7 +78,6 @@ export function App() {
           {error && <div className="sub" style={{ color: '#f87171' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button className="button" type="submit">Unlock</button>
-            <button className="button secondary" type="button" onClick={() => navigate('/setup')}>First time setup</button>
           </div>
         </form>
       </div>

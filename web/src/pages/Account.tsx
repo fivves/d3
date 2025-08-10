@@ -12,6 +12,7 @@ export function Account() {
   const [avatar, setAvatar] = useState<File | null>(null);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -59,6 +60,29 @@ export function Account() {
         {msg && <div style={{ marginTop: 8 }}>{msg}</div>}
         {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
       </form>
+
+      <div style={{ height: 16 }} />
+      <div className="heading">Danger zone</div>
+      <div className="sub">Resetting will erase your user, logs, points, prizes, and savings. This cannot be undone.</div>
+      <div style={{ marginTop: 8 }}>
+        <label>Type "RESET" to confirm</label>
+        <input value={resetConfirm} onChange={(e)=>setResetConfirm(e.target.value)} placeholder="RESET" />
+      </div>
+      <button
+        className="button secondary"
+        style={{ background: '#7f1d1d' }}
+        disabled={resetConfirm !== 'RESET'}
+        onClick={async () => {
+          if (resetConfirm !== 'RESET') return;
+          try {
+            await api.post('/admin/reset');
+            localStorage.removeItem('token');
+            window.location.href = '/setup';
+          } catch (e:any) {
+            setErr(e?.response?.data?.error || 'Failed to reset');
+          }
+        }}
+      >Reset database</button>
     </div>
   );
 }
