@@ -309,10 +309,17 @@ app.post('/api/motivation/checklist/score', authMiddleware, async (req, res) => 
   const userId = (req as any).userId as number;
   const { status, date } = req.body as any;
   if (status !== 'complete' && status !== 'missed') return res.status(400).json({ error: 'Invalid status' });
-  const points = status === 'complete' ? 5 : -5;
-  const note = status === 'complete' ? 'Checklist complete' : 'Checklist missed';
+  const points = status === 'complete' ? 1 : -5;
+  const note = status === 'complete' ? 'Checklist complete (+1)' : 'Checklist missed (-5)';
   const when = date ? new Date(date) : new Date();
   const tx = await prisma.transaction.create({ data: { userId, points, type: status === 'complete' ? 'earn' : 'deduct', note, date: when } });
+  res.json({ transaction: tx });
+});
+
+// Motivation: Urge surfing completion (+1 per full 15-min session)
+app.post('/api/motivation/urge/complete', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const tx = await prisma.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Completed 15‑min urge surf', date: new Date() } });
   res.json({ transaction: tx });
 });
 
@@ -339,6 +346,14 @@ app.put('/api/journal/today', authMiddleware, async (req, res) => {
   } else {
     log = await prisma.dailyLog.create({ data: { userId, date: today, used: false, context: null, paid: null, amountCents: null, ...data } });
   }
+  // Award +1 point only on first non-empty journal entry of the day
+  try {
+    const wasEmpty = !existing || !existing.journal;
+    const nowHasContent = (data.journal && String(data.journal).trim().length > 0);
+    if (wasEmpty && nowHasContent) {
+      await prisma.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Journal entry (+1)' } });
+    }
+  } catch {}
   res.json({ log });
 });
 

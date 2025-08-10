@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import api from '../lib/api';
 
 type UrgeSurfingWidgetProps = {
   initialMinutes?: number;
@@ -79,6 +80,16 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
   const phaseLabel = isInhale ? 'Inhale' : 'Exhale';
 
   const petals = useMemo(() => Array.from({ length: 8 }, (_, i) => i), []);
+
+  useEffect(() => {
+    if (remainingMs <= 0 && !isRunning && totalMs > 0) {
+      // Completed a full session → award +1 point
+      (async () => {
+        try { await api.post('/motivation/urge/complete'); } catch {}
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remainingMs, isRunning]);
 
   return (
     <div className="urge-widget">
