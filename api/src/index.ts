@@ -260,6 +260,39 @@ app.post('/api/motivation/checklist/score', authMiddleware, async (req, res) => 
   res.json({ transaction: tx });
 });
 
+// Journal: get today's entry (if any)
+app.get('/api/journal/today', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const today = dayjs().startOf('day').toDate();
+  const log = await prisma.dailyLog.findFirst({ where: { userId, date: today } });
+  res.json({ log });
+});
+
+// Journal: upsert today's entry (editable only today)
+app.put('/api/journal/today', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const { journal, mood } = req.body as any;
+  const today = dayjs().startOf('day').toDate();
+  // Only allow editing for today
+  const existing = await prisma.dailyLog.findFirst({ where: { userId, date: today } });
+  const moodInt = mood === null || mood === undefined ? null : Number(mood);
+  const data: any = { journal: journal ?? null, mood: moodInt ?? null };
+  let log;
+  if (existing) {
+    log = await prisma.dailyLog.update({ where: { id: existing.id }, data });
+  } else {
+    log = await prisma.dailyLog.create({ data: { userId, date: today, used: false, context: null, paid: null, amountCents: null, ...data } });
+  }
+  res.json({ log });
+});
+
+// Journal: list all entries with journal content (newest first)
+app.get('/api/journal', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const logs = await prisma.dailyLog.findMany({ where: { userId, NOT: { journal: null } }, orderBy: { date: 'desc' } });
+  res.json({ logs });
+});
+
 // Admin: reset database (keep quotes)
 app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
   await prisma.$transaction([
@@ -271,73 +304,6 @@ app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
     prisma.user.deleteMany({})
   ]);
   res.json({ ok: true });
-});
-
-// Admin: seed demo data (3-week clean streak, example prizes)
-app.post('/api/admin/seed-demo', authMiddleware, async (req, res) => {
-  const userId = (req as any).userId as number;
-  const weeks = Number((req.body as any)?.weeks) || 3;
-  const days = Math.max(1, weeks * 7);
-
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return res.status(400).json({ error: 'User not found' });
-
-  // Clear existing activity for a clean demo slate
-  await prisma.$transaction([
-    prisma.purchase.deleteMany({ where: { userId } }),
-    prisma.transaction.deleteMany({ where: { userId } }),
-    prisma.moneyEvent.deleteMany({ where: { userId } }),
-    prisma.dailyLog.deleteMany({ where: { userId } }),
-    prisma.prize.deleteMany({ where: { userId } }),
-  ]);
-
-  const perDaySaved = Math.round((user.weeklySpendCents || 0) / 7);
-  const logsToCreate: Parameters<typeof prisma.dailyLog.create>[0]["data"][] = [];
-  const txCreates: any[] = [];
-  const moneyCreates: any[] = [];
-
-  for (let i = days - 1; i >= 0; i--) {
-    const d = dayjs().subtract(i, 'day').startOf('day').toDate();
-    logsToCreate.push({ userId, date: d, used: false, context: null, paid: null, amountCents: null });
-  }
-
-  // Create logs, then related transactions and money events
-  const createdLogs = await prisma.$transaction(
-    logsToCreate.map((data) => prisma.dailyLog.create({ data }))
-  );
-
-  for (const log of createdLogs) {
-    txCreates.push(
-      prisma.transaction.create({ data: { userId, points: 10, type: 'earn', note: 'Clean day', relatedLogId: log.id, date: log.date } })
-    );
-    if (perDaySaved > 0) {
-      moneyCreates.push(
-        prisma.moneyEvent.create({ data: { userId, amountCents: perDaySaved, type: 'saved', note: 'Clean day savings', relatedLogId: log.id, date: log.date } })
-      );
-    }
-  }
-
-  if (txCreates.length || moneyCreates.length) {
-    await prisma.$transaction([ ...txCreates, ...moneyCreates ]);
-  }
-
-  // Example prizes
-  const prizeA = await prisma.prize.create({ data: { userId, name: '60‑minute massage', description: 'Deep tissue recovery', costPoints: 200 } });
-  const prizeB = await prisma.prize.create({ data: { userId, name: 'Running shoes', description: 'New pair for morning runs', costPoints: 300 } });
-  const prizeC = await prisma.prize.create({ data: { userId, name: 'Book', description: 'A book on habit building', costPoints: 120 } });
-
-  // Simulate purchasing one prize yesterday
-  const purchaseDate = dayjs().subtract(1, 'day').toDate();
-  await prisma.$transaction(async (tx) => {
-    await tx.purchase.create({ data: { userId, prizeId: prizeC.id, date: purchaseDate } });
-    await tx.transaction.create({ data: { userId, points: -Math.abs(prizeC.costPoints), type: 'spend', note: `Purchased ${prizeC.name}`, relatedPrizeId: prizeC.id, date: purchaseDate } });
-    await tx.prize.update({ where: { id: prizeC.id }, data: { active: false } });
-  });
-
-  // Update user startDate to show longer history
-  await prisma.user.update({ where: { id: userId }, data: { startDate: dayjs().subtract(days, 'day').toDate() } });
-
-  res.json({ ok: true, logs: createdLogs.length, prizes: [prizeA, prizeB, { ...prizeC, active: false }] });
 });
 
 const port = Number(process.env.PORT || 4000);

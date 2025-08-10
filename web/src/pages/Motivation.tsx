@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import UrgeSurfingWidget from '../components/UrgeSurfingWidget';
 import MakeItObviousWidget from '../components/MakeItObviousWidget';
+import DailyJournalWidget from '../components/DailyJournalWidget';
 
 export function Motivation() {
   const [quotes, setQuotes] = useState<{ text:string; author?:string|null }[]>([]);
@@ -19,6 +20,10 @@ export function Motivation() {
 
       <div className="card gradient">
         <MakeItObviousWidget />
+      </div>
+
+      <div className="card gradient">
+        <DailyJournalWidget />
       </div>
 
       <div className="card gradient">

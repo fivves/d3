@@ -7,6 +7,7 @@ import { Bank } from './pages/Bank';
 import { Log } from './pages/Log';
 import { Prizes } from './pages/Prizes';
 import { Motivation } from './pages/Motivation';
+import { Journal } from './pages/Journal';
 import { Account } from './pages/Account';
 import { Setup } from './pages/Setup';
 import './styles.css';
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
       { path: 'log', element: <Log /> },
       { path: 'prizes', element: <Prizes /> },
       { path: 'motivation', element: <Motivation /> },
+      { path: 'journal', element: <Journal /> },
       { path: 'account', element: <Account /> }
     ]
   },

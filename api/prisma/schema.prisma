@@ -34,6 +34,8 @@ model DailyLog {
   context     String?
   paid        Boolean?
   amountCents Int?
+  journal     String?
+  mood        Int?
   createdAt   DateTime  @default(now())
   user        User      @relation(fields: [userId], references: [id])
 
