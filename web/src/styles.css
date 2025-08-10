@@ -31,6 +31,27 @@ form { display: grid; gap: 12px; }
 .pill { background:#0e121a; border:1px solid #222; border-radius:999px; padding:6px 12px; }
 .hero { padding: 24px; border-radius: 16px; background: radial-gradient(1200px 400px at 20% -10%, rgba(96,165,250,.25), transparent), radial-gradient(1200px 400px at 80% -10%, rgba(110,231,183,.22), transparent), var(--card); border:1px solid #222; }
 
+/* Urge Surfing widget */
+.urge-widget { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.urge-widget .timer-display { font-size: 32px; font-weight: 800; letter-spacing: 0.5px; }
+.urge-widget .breath-label { text-align:center; }
+
+.breathe { position: relative; width: 220px; height: 220px; margin: 4px auto 8px; animation: breathe-cycle 10s ease-in-out infinite; }
+.breathe.paused { animation-play-state: paused; filter: grayscale(0.2) opacity(0.9); }
+
+.petal { position:absolute; left:50%; top:50%; width:56px; height:56px; margin-left:-28px; margin-top:-28px; border-radius:999px; background: radial-gradient(circle at 30% 30%, rgba(110,231,183,0.9), rgba(96,165,250,0.75)); box-shadow: 0 0 18px rgba(96,165,250,0.35); opacity:0.9; }
+.petal.center { width:68px; height:68px; margin-left:-34px; margin-top:-34px; background: radial-gradient(circle at 30% 30%, rgba(96,165,250,0.9), rgba(110,231,183,0.75)); box-shadow: 0 0 24px rgba(110,231,183,0.35); }
+
+@keyframes breathe-cycle {
+  0% { transform: scale(0.85); }
+  40% { transform: scale(1.1); }
+  100% { transform: scale(0.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe { animation: none; }
+}
+
 .icon-bubble { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; background: linear-gradient(135deg, rgba(96,165,250,.25), rgba(110,231,183,.22)); border:1px solid #233; }
 .avatar-glow { box-shadow: 0 0 0 3px rgba(96,165,250,.35), 0 0 20px rgba(96,165,250,.2); }
 .card.fancy { background: linear-gradient(180deg, rgba(17,24,39,.6), rgba(17,24,39,.4)), var(--card); border:1px solid #223; }

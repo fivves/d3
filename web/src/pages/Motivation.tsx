@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
+import UrgeSurfingWidget from '../components/UrgeSurfingWidget';
 
 export function Motivation() {
   const [quotes, setQuotes] = useState<{ text:string; author?:string|null }[]>([]);
@@ -12,6 +13,8 @@ export function Motivation() {
     <div className="grid">
       <div className="card gradient">
         <div className="card-title"><span className="icon">🧠</span>Science‑based tools</div>
+        <UrgeSurfingWidget />
+        <div style={{ height: 8 }} />
         <ul>
           <li><b>Urge Surfing</b>: Cravings rise and fall like waves in ~10–20 minutes. Set a timer, breathe slowly (4s in, 6s out), and observe sensations without judgment until the wave passes.</li>
           <li><b>Implementation Intentions</b>: If‑Then plans reduce friction. Example: “If it’s 8pm and a craving hits, then I will make tea and take a 10‑minute walk.”</li>
