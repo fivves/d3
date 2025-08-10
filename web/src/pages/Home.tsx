@@ -147,7 +147,16 @@ export function Home() {
           <div className="card-title"><span className="icon">📓</span>Today’s Journal</div>
           {journal ? (
             <>
-              {typeof journal.mood === 'number' && <div className="pill">Mood: {journal.mood}/5</div>}
+              {typeof journal.mood === 'number' && (
+                <div className="mood-chip" aria-label={`Mood ${journal.mood} out of 5`}>
+                  <span className="mood-label">Mood</span>
+                  <div className="mood-dots">
+                    {[1,2,3,4,5].map((n) => (
+                      <span key={n} className={`dot ${journal.mood >= n ? 'on' : ''}`} />
+                    ))}
+                  </div>
+                </div>
+              )}
               {journal.journal ? (
                 <div className="sub truncate" style={{ marginTop: 8 }}>{journal.journal}</div>
               ) : (
