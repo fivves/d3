@@ -236,8 +236,39 @@ app.delete('/api/prizes/:id', authMiddleware, async (req, res) => {
 });
 
 // Motivation quotes
+const fallbackQuotes = [
+  { text: 'Discipline is choosing what you want most over what you want now.', author: 'Abraham Lincoln' },
+  { text: 'It does not matter how slowly you go as long as you do not stop.', author: 'Confucius' },
+  { text: 'We are what we repeatedly do. Excellence, then, is not an act but a habit.', author: 'Will Durant' },
+  { text: 'You do not rise to the level of your goals. You fall to the level of your systems.', author: 'James Clear' },
+  { text: 'Success is the sum of small efforts, repeated day in and day out.', author: 'Robert Collier' },
+  { text: 'The only way to achieve the impossible is to believe it is possible and work for it daily.', author: 'Unknown' },
+  { text: 'Motivation gets you going, but discipline keeps you growing.', author: 'John C. Maxwell' },
+  { text: 'Suffer the pain of discipline or the pain of regret.', author: 'Jim Rohn' },
+  { text: 'Tiny gains, remarkable results.', author: 'James Clear' },
+  { text: 'The only way out is through.', author: 'Robert Frost' },
+  { text: 'Action is the antidote to anxiety.', author: 'Naval Ravikant' },
+  { text: 'Fall in love with the process and the results will come.', author: 'Eric Thomas' },
+  { text: 'Hard choices, easy life. Easy choices, hard life.', author: 'Jerzy Gregorek' },
+  { text: 'First we form habits, then they form us.', author: 'John Dryden' },
+  { text: 'The secret of your future is hidden in your daily routine.', author: 'Mike Murdock' },
+  { text: 'Discipline equals freedom.', author: 'Jocko Willink' },
+  { text: 'Mood follows action.', author: 'Rich Roll' },
+  { text: 'What you practice grows stronger.', author: 'Shauna Shapiro' },
+  { text: 'Cravings are waves—learn to surf them.', author: 'Urge Surfing' },
+  { text: 'Start where you are. Use what you have. Do what you can.', author: 'Arthur Ashe' },
+];
+
 app.get('/api/motivation/quotes', async (_req, res) => {
-  const quotes = await prisma.motivationQuote.findMany({ orderBy: { id: 'asc' } });
+  const all = await prisma.motivationQuote.findMany({ orderBy: { id: 'asc' } });
+  const pool = all.length > 0 ? all : fallbackQuotes;
+  const todayIndex = dayjs().dayOfYear ? (dayjs() as any).dayOfYear() : dayjs().diff(dayjs().startOf('year'), 'day') + 1;
+  const size = Math.min(6, pool.length);
+  const start = pool.length > 0 ? (todayIndex % pool.length) : 0;
+  const quotes: any[] = [];
+  for (let i = 0; i < size; i++) {
+    quotes.push(pool[(start + i) % pool.length]);
+  }
   res.json({ quotes });
 });
 
