@@ -10,6 +10,13 @@ function greeting() {
   return 'Good evening';
 }
 
+function timeIcon() {
+  const h = new Date().getHours();
+  if (h < 12) return '🌅';
+  if (h < 18) return '🌤️';
+  return '🌙';
+}
+
 export function Home() {
   const { user } = useAppStore();
   const [bank, setBank] = useState<{ balance: number; totals: { earned: number; spent: number } } | null>(null);
@@ -50,34 +57,55 @@ export function Home() {
   }, [user]);
 
   return (
-    <div className="grid">
-      <div className="card">
-        <div className="heading">{greeting()} {user?.firstName}</div>
-        <div className="row" style={{ alignItems: 'center' }}>
-          {user?.avatarUrl && <img src={user.avatarUrl} alt="avatar" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover', border: '1px solid #222' }} />}
-          <div className="pill">Days clean: <b>{daysClean}</b></div>
-          <div className="pill">Current streak: <b>{streak}</b></div>
+    <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
+      <div className="hero" style={{ display:'flex', gap:16, alignItems:'center', justifyContent:'space-between' }}>
+        <div style={{ display:'flex', gap:16, alignItems:'center' }}>
+          <div className="icon-bubble" aria-hidden>{timeIcon()}</div>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>{greeting()} {user?.firstName}</div>
+            <div className="sub">Every choice counts. Keep stacking wins.</div>
+          </div>
         </div>
+        {user?.avatarUrl && (
+          <img
+            src={user.avatarUrl}
+            alt="avatar"
+            className="avatar-glow"
+            style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }}
+          />
+        )}
       </div>
 
-      <div className="card">
-        <div className="heading">Points</div>
-        <div className="row">
-          <div className="pill">Balance: <b>{bank?.balance ?? 0}</b></div>
-          <div className="pill">Earned: <b>{bank?.totals.earned ?? 0}</b></div>
-          <div className="pill">Spent: <b>{bank?.totals.spent ?? 0}</b></div>
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">🏆</span>Points</div>
+          <div className="stats">
+            <div><div className="stat-label">Balance</div><div className="stat-value">{bank?.balance ?? 0}</div></div>
+            <div><div className="stat-label">Earned</div><div className="stat-value positive">{bank?.totals.earned ?? 0}</div></div>
+            <div><div className="stat-label">Spent</div><div className="stat-value negative">{bank?.totals.spent ?? 0}</div></div>
+          </div>
         </div>
-      </div>
 
-      <div className="card">
-        <div className="heading">Savings</div>
-        <div className="pill">Net saved: <b>${((savings?.net ?? 0)/100).toFixed(2)}</b></div>
-      </div>
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">🔥</span>Streak</div>
+          <div className="stats">
+            <div><div className="stat-label">Current</div><div className="stat-value">{streak} days</div></div>
+            <div><div className="stat-label">Since start</div><div className="stat-value">{daysClean} days</div></div>
+          </div>
+        </div>
 
-      <div className="card">
-        <div className="heading">Motivation</div>
-        <div className="sub">{quote?.text}</div>
-        {quote?.author && <div style={{ marginTop: 6 }}>— {quote.author}</div>}
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">💰</span>Savings</div>
+          <div className="stats">
+            <div><div className="stat-label">Net saved</div><div className="stat-value positive">${((savings?.net ?? 0)/100).toFixed(2)}</div></div>
+          </div>
+        </div>
+
+        <div className="card gradient">
+          <div className="card-title"><span className="icon">💡</span>Motivation</div>
+          <div className="sub" style={{ fontSize: 16 }}>{quote?.text}</div>
+          {quote?.author && <div style={{ marginTop: 8, opacity:.8 }}>— {quote.author}</div>}
+        </div>
       </div>
     </div>
   );
