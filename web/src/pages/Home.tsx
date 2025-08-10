@@ -175,7 +175,7 @@ export function Home() {
 
       {/* At-a-glance widgets */}
       <div className="grid">
-        <div className="card gradient">
+        <div className="card gradient" style={{ display:'flex', flexDirection:'column', minHeight: 180 }}>
           <div className="card-title" style={{ justifyContent:'space-between' }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span className="icon">📓</span>Today’s Journal
@@ -191,17 +191,19 @@ export function Home() {
               </div>
             )}
           </div>
-          {journal ? (
-            <>
-              {journal.journal ? (
-                <div className="sub truncate" style={{ marginTop: 8 }}>{journal.journal}</div>
-              ) : (
-                <div className="sub">No entry yet.</div>
-              )}
-            </>
-          ) : (
-            <div className="sub">No entry yet.</div>
-          )}
+          <div style={{ flex:1 }}>
+            {journal ? (
+              <>
+                {journal.journal ? (
+                  <div className="sub truncate" style={{ marginTop: 8 }}>{journal.journal}</div>
+                ) : (
+                  <div className="sub">No entry yet.</div>
+                )}
+              </>
+            ) : (
+              <div className="sub">No entry yet.</div>
+            )}
+          </div>
           <div className="card-cta">
             <Link className="button" to="/motivation">Edit</Link>
             <Link className="button secondary" to="/journal" style={{ marginLeft: 8 }}>View all</Link>
