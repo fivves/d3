@@ -96,7 +96,7 @@ export default function DailyJournalWidget() {
       <div className="row" style={{ alignItems:'center', marginBottom: 8 }}>
         <div className="pill" aria-label="Today">{dateLabel}</div>
         <div className="spacer" />
-        <Link className="button secondary" to="/journal">View all logs</Link>
+        <Link className="button secondary" to="/journal">View all</Link>
       </div>
       <label>Mood</label>
       <div className="row" role="radiogroup" aria-label="Mood 1 to 5" style={{ marginBottom: 8 }}>
@@ -121,6 +121,9 @@ export default function DailyJournalWidget() {
       <div style={{ display:'flex', gap:8, marginTop:8 }}>
         <button className="button" onClick={save} disabled={saving || locked}>{buttonLabel}</button>
         {locked && <div className="sub">Locked for today. Come back tomorrow.</div>}
+      </div>
+      <div style={{ display:'flex', gap:8, marginTop:12 }}>
+        <div className="pill">First journal entry today earns +1 point</div>
       </div>
       {message && <div style={{ marginTop:8 }}>{message}</div>}
       {error && <div className="sub" style={{ marginTop:4, color:'#f87171' }}>{error}</div>}
