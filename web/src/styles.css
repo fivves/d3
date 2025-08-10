@@ -70,6 +70,7 @@ form { display: grid; gap: 12px; }
 .list-item { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #222; }
 .list-item .left { display:flex; flex-direction:column; gap:4px; }
 .badge { display:inline-block; padding:4px 8px; border-radius:999px; background:#0e121a; border:1px solid #222; font-size:12px; color:var(--muted); }
+.truncate { display:block; display:-webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* Motivation widgets separation */
 .card .card { border:1px dashed #243045; background: linear-gradient(180deg, rgba(17,24,39,.5), rgba(17,24,39,.35)); }

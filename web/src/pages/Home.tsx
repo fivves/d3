@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import api from '../lib/api';
 import { useAppStore } from '../store';
+import { Link } from 'react-router-dom';
 
 function greeting() {
   const h = new Date().getHours();
@@ -17,26 +18,58 @@ function timeIcon() {
   return '🌙';
 }
 
+function todayKey(): string {
+  return dayjs().format('YYYY-MM-DD');
+}
+
+function msUntilNextMidnight(): number {
+  const next = dayjs().add(1, 'day').startOf('day');
+  return Math.max(0, next.diff(dayjs(), 'millisecond'));
+}
+
 export function Home() {
   const { user } = useAppStore();
   const [bank, setBank] = useState<{ balance: number; totals: { earned: number; spent: number } } | null>(null);
   const [savings, setSavings] = useState<{ net: number } | null>(null);
-  const [quote, setQuote] = useState<{ text: string; author?: string | null } | null>(null);
+  const [quotes, setQuotes] = useState<{ text: string; author?: string | null }[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [journal, setJournal] = useState<{ journal?: string | null; mood?: number | null } | null>(null);
+  const [mioProgress, setMioProgress] = useState<{ done: number; total: number }>({ done: 0, total: 6 });
 
   useEffect(() => {
     (async () => {
-      const [b, s, q, l] = await Promise.all([
+      const [b, s, qs, l, j] = await Promise.all([
         api.get('/bank/summary'),
         api.get('/savings'),
-        api.get('/motivation/random'),
-        api.get('/logs')
+        api.get('/motivation/quotes'),
+        api.get('/logs'),
+        api.get('/journal/today')
       ]);
       setBank(b.data);
       setSavings(s.data);
-      setQuote(q.data.quote);
+      setQuotes(qs.data.quotes || []);
       setLogs(l.data.logs);
+      setJournal(j.data.log || null);
     })();
+
+    function computeMio() {
+      try {
+        const date = localStorage.getItem('mio:date');
+        const raw = localStorage.getItem('mio:checked');
+        if (date === todayKey() && raw) {
+          const arr = JSON.parse(raw) as boolean[];
+          const done = arr.filter(Boolean).length;
+          setMioProgress({ done, total: arr.length || 6 });
+          return;
+        }
+      } catch {}
+      setMioProgress({ done: 0, total: 6 });
+    }
+    computeMio();
+    const timer = window.setTimeout(() => {
+      setMioProgress({ done: 0, total: 6 });
+    }, msUntilNextMidnight());
+    return () => clearTimeout(timer);
   }, []);
 
   const streak = useMemo(() => {
@@ -103,8 +136,43 @@ export function Home() {
 
         <div className="card gradient">
           <div className="card-title"><span className="icon">💡</span>Motivation</div>
-          <div className="sub" style={{ fontSize: 16 }}>{quote?.text}</div>
-          {quote?.author && <div style={{ marginTop: 8, opacity:.8 }}>— {quote.author}</div>}
+          <div className="sub" style={{ fontSize: 16 }}>{quotes[0]?.text}</div>
+          {quotes[0]?.author && <div style={{ marginTop: 8, opacity:.8 }}>— {quotes[0].author}</div>}
+        </div>
+      </div>
+
+      {/* At-a-glance widgets */}
+      <div className="grid">
+        <div className="card gradient">
+          <div className="card-title"><span className="icon">📓</span>Today’s Journal</div>
+          {journal ? (
+            <>
+              {typeof journal.mood === 'number' && <div className="pill">Mood: {journal.mood}/5</div>}
+              {journal.journal ? (
+                <div className="sub truncate" style={{ marginTop: 8 }}>{journal.journal}</div>
+              ) : (
+                <div className="sub">No entry yet.</div>
+              )}
+            </>
+          ) : (
+            <div className="sub">No entry yet.</div>
+          )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <Link className="button" to="/motivation">Edit</Link>
+            <Link className="button secondary" to="/journal">View all</Link>
+          </div>
+        </div>
+
+        <div className="card gradient">
+          <div className="card-title"><span className="icon">👀</span>Make it Obvious</div>
+          <div className="sub">{mioProgress.done}/{mioProgress.total} completed today</div>
+          <div style={{ marginTop: 12 }}><Link className="button" to="/motivation">Continue checklist</Link></div>
+        </div>
+
+        <div className="card gradient">
+          <div className="card-title"><span className="icon">🌊</span>Urge Surfing</div>
+          <div className="sub">Cravings rise and fall like waves. Ride one for 10 minutes.</div>
+          <div style={{ marginTop: 12 }}><Link className="button" to="/motivation">Start 10‑min surf</Link></div>
         </div>
       </div>
     </div>
