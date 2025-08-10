@@ -116,6 +116,14 @@ export function Home() {
           <div>
             <div style={{ fontSize: 22, fontWeight: 800 }}>{greeting()} {user?.firstName}</div>
             <div className="sub">Every choice counts. Keep stacking wins.</div>
+            {elapsed && (
+              <div className="time-clean" style={{ marginTop:8 }}>
+                <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">days</span></div>
+                <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">hrs</span></div>
+                <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">min</span></div>
+                <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">sec</span></div>
+              </div>
+            )}
           </div>
         </div>
         {user?.avatarUrl && (
@@ -129,19 +137,7 @@ export function Home() {
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-        <div className="card fancy">
-          <div className="card-title"><span className="icon">⏱️</span>Time clean</div>
-          {elapsed ? (
-            <div className="time-clean">
-              <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">days</span></div>
-              <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">hrs</span></div>
-              <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">min</span></div>
-              <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">sec</span></div>
-            </div>
-          ) : (
-            <div className="sub">Start your journey to begin tracking.</div>
-          )}
-        </div>
+        
         <div className="card fancy">
           <div className="card-title"><span className="icon">🏆</span>Points</div>
           <div className="stats">
