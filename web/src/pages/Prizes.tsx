@@ -105,7 +105,7 @@ export function Prizes() {
   }
 
   return (
-    <div className="grid" style={{ gridTemplateColumns: 'minmax(280px, 1fr) 2fr', alignItems:'start' }}>
+    <div className="grid prizes-layout">
       {/* Left column: stacked cards */}
       <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
         <div className="card fancy">
