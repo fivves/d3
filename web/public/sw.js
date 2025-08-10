@@ -2,6 +2,7 @@ const CACHE_NAME = 'd3-cache-v1';
 const ASSETS = [
   '/',
   '/index.html',
+  '/manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {
@@ -18,7 +19,10 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET' || new URL(req.url).pathname.startsWith('/api/')) return;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
   event.respondWith(
     caches.match(req).then((cached) => cached || fetch(req).then((res) => {
       const resClone = res.clone();
