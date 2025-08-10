@@ -248,6 +248,18 @@ app.get('/api/motivation/random', async (_req, res) => {
   res.json({ quote: one });
 });
 
+// Motivation: Make it Obvious checklist scoring (+5 complete, -5 missed)
+app.post('/api/motivation/checklist/score', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const { status, date } = req.body as any;
+  if (status !== 'complete' && status !== 'missed') return res.status(400).json({ error: 'Invalid status' });
+  const points = status === 'complete' ? 5 : -5;
+  const note = status === 'complete' ? 'Checklist complete' : 'Checklist missed';
+  const when = date ? new Date(date) : new Date();
+  const tx = await prisma.transaction.create({ data: { userId, points, type: status === 'complete' ? 'earn' : 'deduct', note, date: when } });
+  res.json({ transaction: tx });
+});
+
 // Admin: reset database (keep quotes)
 app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
   await prisma.$transaction([
