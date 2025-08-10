@@ -103,3 +103,10 @@ git push -u origin main
 MIT
 
 
+### Screenshots
+
+Home
+
+![Home](screenshots/Screenshot%202025-08-09%20215135.png)
+
+
