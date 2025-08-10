@@ -82,9 +82,11 @@ export function Prizes() {
   }
 
   function editPrizePrompt(p: Prize) {
-    const name = window.prompt('Name', p.name) ?? p.name;
-    const description = window.prompt('Description', p.description || '') ?? p.description || '';
-    const costStr = window.prompt('Cost (points)', String(p.costPoints)) ?? String(p.costPoints);
+    const name = (window.prompt('Name', p.name) ?? p.name);
+    const descriptionDefault = p.description || '';
+    const description = (window.prompt('Description', descriptionDefault) ?? descriptionDefault);
+    const costStrDefault = String(p.costPoints);
+    const costStr = (window.prompt('Cost (points)', costStrDefault) ?? costStrDefault);
     const costPoints = Math.round(Number(costStr) || 0);
     return { name, description, costPoints };
   }
