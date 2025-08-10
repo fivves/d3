@@ -166,7 +166,7 @@ export function Home() {
           </div>
         </div>
 
-        <div className="card gradient">
+        <div className="card gradient" style={{ display:'flex', flexDirection:'column', minHeight: 180 }}>
           <div className="card-title"><span className="icon">💡</span>Motivation</div>
           <div className="sub" style={{ fontSize: 16 }}>{quotes[0]?.text}</div>
           {quotes[0]?.author && <div style={{ marginTop: 8, opacity:.8 }}>— {quotes[0].author}</div>}
@@ -202,9 +202,9 @@ export function Home() {
           ) : (
             <div className="sub">No entry yet.</div>
           )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <div className="card-cta">
             <Link className="button" to="/motivation">Edit</Link>
-            <Link className="button secondary" to="/journal">View all</Link>
+            <Link className="button secondary" to="/journal" style={{ marginLeft: 8 }}>View all</Link>
           </div>
         </div>
 
