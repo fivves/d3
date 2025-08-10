@@ -182,7 +182,10 @@ app.get('/api/prizes', authMiddleware, async (req, res) => {
 app.post('/api/prizes', authMiddleware, upload.single('image'), async (req, res) => {
   const userId = (req as any).userId as number;
   const { name, description, costPoints } = req.body as any;
-  const data: any = { userId, name, description, costPoints: Number(costPoints) || 0 };
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  const cost = Number(costPoints);
+  if (Number.isNaN(cost)) return res.status(400).json({ error: 'costPoints must be a number' });
+  const data: any = { userId, name, description, costPoints: cost || 0 };
   if (req.file) {
     data.imageData = req.file.buffer as any;
     data.imageMimeType = req.file.mimetype;

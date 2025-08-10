@@ -24,9 +24,9 @@ export function Prizes() {
     form.set('name', name);
     if (description) form.set('description', description);
     form.set('costPoints', String(Math.round(Number(cost)||0)));
-    if (image) form.set('image', image);
+    if (image) form.set('image', image, image.name || 'upload.jpg');
     try {
-      await api.post('/prizes', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post('/prizes', form);
       setName(''); setDescription(''); setCost(''); setImage(null);
       await load();
     } catch (e:any) {
