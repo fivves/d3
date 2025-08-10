@@ -7,7 +7,7 @@ type ChecklistItem = {
   id: string;
   title: string;
   description: string;
-  category: 'Environment' | 'Nutrition' | 'Sleep' | 'Social' | 'Mind';
+  category: 'Environment' | 'Nutrition' | 'Sleep' | 'Social' | 'Mind' | 'Music';
   icon: string;
 };
 
@@ -22,7 +22,7 @@ const DEFAULT_ITEMS: ChecklistItem[] = [
   {
     id: 'env-tidy-up',
     title: 'Tidy up',
-    description: 'Clean a part of the house, even though you don't have to.',
+    description: "Clean a part of the house, even though you don't have to.",
     category: 'Environment',
     icon: '🧹',
   },
@@ -43,7 +43,7 @@ const DEFAULT_ITEMS: ChecklistItem[] = [
   {
     id: 'social-checkin',
     title: 'Check‑in',
-    description: 'Let a trust person know you are doing well.',
+    description: 'Let a trusted person know you are doing well.',
     category: 'Social',
     icon: '💬',
   },
