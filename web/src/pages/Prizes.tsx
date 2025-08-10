@@ -81,6 +81,25 @@ export function Prizes() {
     }
   }
 
+  function editPrizePrompt(p: Prize) {
+    const name = window.prompt('Name', p.name) ?? p.name;
+    const description = window.prompt('Description', p.description || '') ?? p.description || '';
+    const costStr = window.prompt('Cost (points)', String(p.costPoints)) ?? String(p.costPoints);
+    const costPoints = Math.round(Number(costStr) || 0);
+    return { name, description, costPoints };
+  }
+
+  async function editPrize(p: Prize) {
+    setErr('');
+    try {
+      const edits = editPrizePrompt(p);
+      await api.put(`/prizes/${p.id}`, edits);
+      await load();
+    } catch (e:any) {
+      setErr(e?.response?.data?.error || 'Failed to update prize');
+    }
+  }
+
   async function restock(id:number) {
     setErr('');
     try {
@@ -169,7 +188,7 @@ export function Prizes() {
           ) : (
             <div className="grid" style={{ width:'100%' }}>
               {available.map(p => (
-                <div key={p.id} className="card" style={{ position: 'relative' }}>
+              <div key={p.id} className="card" style={{ position: 'relative' }}>
                   <button
                     onClick={()=>removePrize(p.id)}
                     title="Delete prize"
@@ -180,7 +199,14 @@ export function Prizes() {
                   <div style={{ fontWeight: 700 }}>{p.name}</div>
                   <div className="sub">{p.description}</div>
                   <div className="pill" style={{ margin:'8px 0' }}>Cost: <b>{p.costPoints}</b></div>
-                  <button className="button" onClick={()=>purchase(p.id)}>Buy</button>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button className="button" onClick={()=>purchase(p.id)}>
+                    <span aria-hidden>🛒</span> Buy
+                  </button>
+                  <button className="button secondary" title="Edit" aria-label={`Edit ${p.name}`} onClick={()=>editPrize(p)}>
+                    ✏️
+                  </button>
+                </div>
                 </div>
               ))}
             </div>

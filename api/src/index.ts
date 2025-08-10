@@ -196,6 +196,30 @@ app.post('/api/prizes', authMiddleware, upload.single('image'), async (req, res)
   res.json({ prize: responsePrize });
 });
 
+// Update prize
+app.put('/api/prizes/:id', authMiddleware, upload.single('image'), async (req, res) => {
+  const userId = (req as any).userId as number;
+  const id = Number(req.params.id);
+  const prize = await prisma.prize.findFirst({ where: { id, userId } });
+  if (!prize) return res.status(404).json({ error: 'Not found' });
+  const { name, description, costPoints } = req.body as any;
+  const data: any = {};
+  if (name !== undefined) data.name = name;
+  if (description !== undefined) data.description = description;
+  if (costPoints !== undefined) {
+    const cost = Number(costPoints);
+    if (Number.isNaN(cost)) return res.status(400).json({ error: 'costPoints must be a number' });
+    data.costPoints = cost;
+  }
+  if (req.file) {
+    data.imageData = req.file.buffer as any;
+    data.imageMimeType = req.file.mimetype;
+  }
+  const updated = await prisma.prize.update({ where: { id }, data });
+  const responsePrize = { ...updated, imageUrl: updated.imageData ? `/api/prizes/${updated.id}/image` : updated.imageUrl } as any;
+  res.json({ prize: responsePrize });
+});
+
 app.post('/api/prizes/:id/purchase', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const id = Number(req.params.id);
