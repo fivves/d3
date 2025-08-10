@@ -88,8 +88,9 @@ form { display: grid; gap: 12px; }
 .hero-row { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
 
 @media (max-width: 720px) {
-  .home-hero { flex-direction: column; align-items:flex-start; }
-  .home-hero .right { width:100%; justify-content:flex-start; }
+  .home-hero { flex-direction: column; align-items:stretch; }
+  .home-hero .right { width:100%; justify-content:center; align-items:center; gap:8px; }
+  .clean-label { text-align:center; width:100%; }
 }
 
 /* Lists & rows */
