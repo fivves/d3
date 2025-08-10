@@ -89,7 +89,7 @@ export function Prizes() {
         <div className="card-title"><span className="icon">🛒</span>Available</div>
         <div className="grid">
           {available.length === 0 ? (
-            <div className="card" style={{ textAlign:'center' }}>
+            <div className="card" style={{ textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', minHeight: 140 }}>
               <div className="sub">No prizes available. Add some to view them here.</div>
             </div>
           ) : (
@@ -116,8 +116,8 @@ export function Prizes() {
         <div className="card-title"><span className="icon">✅</span>Purchases</div>
         <div className="grid">
           {purchased.length === 0 ? (
-            <div className="card" style={{ textAlign:'center' }}>
-              <div className="sub">Purchase some to view them here.</div>
+            <div className="card" style={{ textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', minHeight: 140 }}>
+              <div className="sub">No purchases yet. Purchase some to view them here.</div>
             </div>
           ) : (
             purchased.map(p => (
