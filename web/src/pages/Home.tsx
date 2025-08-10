@@ -114,16 +114,18 @@ export function Home() {
         <div style={{ display:'flex', gap:16, alignItems:'center' }}>
           <div className="icon-bubble" aria-hidden>{timeIcon()}</div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{greeting()} {user?.firstName}</div>
+            <div className="hero-row">
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{greeting()} {user?.firstName}</div>
+              {elapsed && (
+                <div className="time-clean compact">
+                  <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">d</span></div>
+                  <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">h</span></div>
+                  <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">m</span></div>
+                  <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">s</span></div>
+                </div>
+              )}
+            </div>
             <div className="sub">Every choice counts. Keep stacking wins.</div>
-            {elapsed && (
-              <div className="time-clean" style={{ marginTop:8 }}>
-                <div className="time-part"><span className="time-num">{elapsed.days}</span><span className="time-label">days</span></div>
-                <div className="time-part"><span className="time-num">{String(elapsed.hours).padStart(2,'0')}</span><span className="time-label">hrs</span></div>
-                <div className="time-part"><span className="time-num">{String(elapsed.minutes).padStart(2,'0')}</span><span className="time-label">min</span></div>
-                <div className="time-part"><span className="time-num">{String(elapsed.seconds).padStart(2,'0')}</span><span className="time-label">sec</span></div>
-              </div>
-            )}
           </div>
         </div>
         {user?.avatarUrl && (
