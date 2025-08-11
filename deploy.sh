@@ -24,9 +24,8 @@ docker compose build
 echo "Starting stack..."
 docker compose up -d
 
-echo "Applying database schema..."
-docker compose exec -T api npx prisma migrate deploy || true
-docker compose exec -T api npx prisma db push
+echo "Applying database migrations..."
+docker compose exec -T api npx prisma migrate deploy
 
 echo "Seeding quotes (idempotent)..."
 docker compose exec -T api node prisma/seed.js || true
