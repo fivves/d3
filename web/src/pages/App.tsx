@@ -101,14 +101,13 @@ export function App() {
   return (
     <>
       <nav className={`navbar ${menuOpen ? 'open' : ''}`} style={{ position:'relative' }}>
-        <div className="nav-top">
-          <NavLink to="/" style={{ display:'inline-flex', alignItems:'center' }}>
-            <img src="/icons/logo.png" alt="D3" style={{ height: 28, width: 'auto' }} />
-          </NavLink>
-          <button className="hamburger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>
-            ☰
-          </button>
-        </div>
+        <NavLink to="/" style={{ display:'inline-flex', alignItems:'center' }}>
+          <img src="/icons/logo.png" alt="D3" style={{ height: 28, width: 'auto' }} />
+        </NavLink>
+        <button className="hamburger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>
+          ☰
+        </button>
+        {pageTitle && <div className="nav-center" aria-current="page">{pageTitle}</div>}
         <div className="nav-links" onClick={() => setMenuOpen(false)}>
           <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/">Home</NavLink>
           <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/motivation">Motivation</NavLink>
@@ -119,7 +118,6 @@ export function App() {
           <button className="button success" onClick={() => navigate('/log')}>Log</button>
           <button className="button secondary" onClick={logout}>Lock</button>
         </div>
-        {pageTitle && <div className="nav-center" aria-current="page">{pageTitle}</div>}
       </nav>
       <div className="container">
         <Outlet />
