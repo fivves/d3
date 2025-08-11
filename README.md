@@ -25,9 +25,7 @@ D3 helps you quit THC with daily logging, a unified sobriety timer, points, priz
 
 ### How sobriety timers work
 - Clean start is derived as follows:
-  - If you have any use logs: uses the most recent use
-    - If that use is today: clean start = the exact log timestamp
-    - Otherwise: clean start = the start of the logged day
+  - If you have any use logs: clean start = the exact timestamp of the most recent use (log creation time)
   - If you have no use logs: clean start = setup completion (`startDate`)
 - CLEAN FOR counts exact time since clean start
 - Streak shows full calendar days since the same clean start

@@ -77,11 +77,9 @@ export function Home() {
   const cleanStartAt = useMemo(() => {
     const usedLogs = (logs || []).filter((l:any) => l.used);
     if (usedLogs.length > 0) {
-      // Most recent use by date
-      const latest = [...usedLogs].sort((a:any,b:any)=> new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-      const lastUsedDay = dayjs(latest.date).startOf('day');
-      // If used today, reset at the exact log time; otherwise at the logged day start
-      return dayjs().isSame(lastUsedDay, 'day') ? dayjs(latest.createdAt) : lastUsedDay;
+      // Most recent use by when it was logged (createdAt). Fall back to date if needed.
+      const latest = [...usedLogs].sort((a:any,b:any)=> new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())[0];
+      return dayjs(latest.createdAt || latest.date);
     }
     // No use logs yet: start from setup completion
     return user?.startDate ? dayjs(user.startDate) : null;
