@@ -17,9 +17,9 @@ export function Setup() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/setup/status').then(({ data }) => {
-      if (data.initialized) navigate('/');
-    });
+    // In multi-user mode, allow signup even if initialized.
+    // If already authenticated, redirect home.
+    api.get('/me').then(({ data }) => { if (data.user) navigate('/'); }).catch(()=>{});
   }, [navigate]);
 
   function next() { setStep((s) => s + 1); }
