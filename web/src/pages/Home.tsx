@@ -36,7 +36,6 @@ export function Home() {
   const [journal, setJournal] = useState<{ journal?: string | null; mood?: number | null } | null>(null);
   const [mioProgress, setMioProgress] = useState<{ done: number; total: number }>({ done: 0, total: 6 });
   const moodValue: number | null = typeof journal?.mood === 'number' ? (journal!.mood as number) : null;
-  const [resetAt, setResetAt] = useState<dayjs.Dayjs | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -98,22 +97,7 @@ export function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // Establish a stable reset timestamp if a use is logged today
-  useEffect(() => {
-    const today = dayjs();
-    const sorted = [...logs].sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime());
-    const lastUsed = sorted.find(l => l.used);
-    const usedToday = lastUsed ? today.isSame(dayjs(lastUsed.date), 'day') : false;
-    if (usedToday) {
-      // Only set once per day when a use is detected for today
-      if (!resetAt || !today.isSame(resetAt, 'day')) {
-        setResetAt(today);
-      }
-    } else {
-      if (resetAt) setResetAt(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logs]);
+  
   const elapsed = useMemo(() => {
     // Determine clean start time based on latest "used" log; fallback to account start
     let cleanStart: dayjs.Dayjs | null = null;
@@ -121,14 +105,11 @@ export function Home() {
       const sorted = [...logs].sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime());
       const lastUsed = sorted.find(l => l.used);
       if (lastUsed) {
-        const lastUsedDay = dayjs(lastUsed.date);
-        if (now.isSame(lastUsedDay, 'day')) {
-          // If used today, use stable reset timestamp (approx time of logging)
-          cleanStart = resetAt || now;
-        } else {
-          // Otherwise, clean time starts at midnight after the last used day
-          cleanStart = lastUsedDay.add(1, 'day').startOf('day');
-        }
+        const lastUsedDay = dayjs(lastUsed.date).startOf('day');
+        // If used today, start from today's midnight; else start from midnight after the last used day
+        cleanStart = now.isSame(lastUsedDay, 'day')
+          ? dayjs().startOf('day')
+          : lastUsedDay.add(1, 'day').startOf('day');
       }
     }
     if (!cleanStart) {
@@ -143,7 +124,7 @@ export function Home() {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return { days, hours, minutes, seconds };
-  }, [now, user?.startDate, logs, resetAt]);
+  }, [now, user?.startDate, logs]);
 
   return (
     <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
