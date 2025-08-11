@@ -73,16 +73,25 @@ export function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  const streak = useMemo(() => {
-    // count consecutive non-used days from latest
-    const sorted = [...logs].sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime());
-    let count = 0;
-    for (const log of sorted) {
-      if (log.used) break;
-      count += 1;
+  // Single source of truth: clean start timestamp
+  const cleanStartAt = useMemo(() => {
+    const usedLogs = (logs || []).filter((l:any) => l.used);
+    if (usedLogs.length > 0) {
+      // Most recent use by date
+      const latest = [...usedLogs].sort((a:any,b:any)=> new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+      const lastUsedDay = dayjs(latest.date).startOf('day');
+      // If used today, reset at the exact log time; otherwise at the logged day start
+      return dayjs().isSame(lastUsedDay, 'day') ? dayjs(latest.createdAt) : lastUsedDay;
     }
-    return count;
-  }, [logs]);
+    // No use logs yet: start from setup completion
+    return user?.startDate ? dayjs(user.startDate) : null;
+  }, [logs, user?.startDate]);
+
+  // Streak = full days since cleanStartAt
+  const streak = useMemo(() => {
+    if (!cleanStartAt) return 0;
+    return dayjs().startOf('day').diff(cleanStartAt.startOf('day'), 'day');
+  }, [cleanStartAt]);
 
   const daysClean = useMemo(() => {
     const start = user?.startDate ? dayjs(user.startDate) : null;
@@ -99,32 +108,15 @@ export function Home() {
 
   
   const elapsed = useMemo(() => {
-    // Determine clean start time based on latest "used" log; fallback to account start
-    let cleanStart: dayjs.Dayjs | null = null;
-    if (logs && logs.length > 0) {
-      const sorted = [...logs].sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime());
-      const lastUsed = sorted.find(l => l.used);
-      if (lastUsed) {
-        const lastUsedDay = dayjs(lastUsed.date).startOf('day');
-        // If used today, start from today's midnight; else start from midnight after the last used day
-        cleanStart = now.isSame(lastUsedDay, 'day')
-          ? dayjs().startOf('day')
-          : lastUsedDay.add(1, 'day').startOf('day');
-      }
-    }
-    if (!cleanStart) {
-      if (!user?.startDate) return null;
-      cleanStart = dayjs(user.startDate);
-    }
-
-    const diffMs = Math.max(0, now.diff(cleanStart));
+    if (!cleanStartAt) return null;
+    const diffMs = Math.max(0, now.diff(cleanStartAt));
     const totalSeconds = Math.floor(diffMs / 1000);
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return { days, hours, minutes, seconds };
-  }, [now, user?.startDate, logs]);
+  }, [now, cleanStartAt]);
 
   return (
     <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
