@@ -53,23 +53,19 @@ export function Home() {
       setJournal(j.data.log || null);
     })();
 
-    function computeMio() {
+    async function computeMioFromApi() {
       try {
-        const scope = (user?.username && user.username.trim()) ? user.username.trim().toLowerCase() : String(user?.id || 'guest');
-        const date = localStorage.getItem(`mio:${scope}:date`);
-        const raw = localStorage.getItem(`mio:${scope}:checked`);
-        if (date === todayKey() && raw) {
-          const arr = JSON.parse(raw) as boolean[];
-          const done = arr.filter(Boolean).length;
-          setMioProgress({ done, total: arr.length || 6 });
-          return;
-        }
-      } catch {}
-      setMioProgress({ done: 0, total: 6 });
+        const { data } = await api.get('/motivation/checklist/status');
+        const arr = Array.isArray(data.checked) ? (data.checked as boolean[]) : [];
+        const done = arr.filter(Boolean).length;
+        setMioProgress({ done, total: arr.length || 6 });
+      } catch {
+        setMioProgress({ done: 0, total: 6 });
+      }
     }
-    computeMio();
+    computeMioFromApi();
     const timer = window.setTimeout(() => {
-      setMioProgress({ done: 0, total: 6 });
+      computeMioFromApi();
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
   }, [user?.username, user?.id]);
