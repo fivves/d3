@@ -25,6 +25,7 @@ model User {
   purchases        Purchase[]
   moneyEvents      MoneyEvent[]
   prizes           Prize[]
+  breathDaily      BreathDaily[]
 }
 
 model DailyLog {
