@@ -3,11 +3,7 @@
 D3 helps you quit THC with daily logging, a unified sobriety timer, points, prizes, and motivation. It’s a React frontend with a Node/Express API and Postgres DB, packaged for easy home‑server deployment with Docker Compose.
 
 ### Screenshots
-<img src="screenshots/1.jpg" width="200"/>
-<img src="screenshots/2.jpg" width="200"/>
-<img src="screenshots/3.jpg" width="200"/>
-<img src="screenshots/4.jpg" width="200"/>
-<img src="screenshots/5.jpg" width="200"/>
+<img src="screenshots/1.jpg" width="200"/><img src="screenshots/2.jpg" width="200"/><img src="screenshots/3.jpg" width="200"/><img src="screenshots/4.jpg" width="200"/><img src="screenshots/5.jpg" width="200"/>
 
 
 ### Features
