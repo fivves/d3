@@ -2,6 +2,14 @@
 
 D3 helps you quit THC with daily logging, a unified sobriety timer, points, prizes, and motivation. It’s a React frontend with a Node/Express API and Postgres DB, packaged for easy home‑server deployment with Docker Compose.
 
+### Screenshots
+
+![1](screenshots/1.jpg)
+![2](screenshots/2.jpg)
+![3](screenshots/3.jpg)
+![4](screenshots/4.jpg)
+![5](screenshots/5.jpg)
+
 ### Features
 - Multi‑user accounts: username + 4‑digit PIN per user
 - Setup & signup wizard: name, username, PIN, avatar, weekly spend
@@ -135,12 +143,6 @@ If not using Nginx locally, set `VITE_API_URL` in `web/.env.local` to your API b
 
 ### Versioning
 This is D3 v1.0.0.
-
-### Screenshots
-
-![Home](screenshots/Screenshot%202025-08-09%20215135.png)
-![Bank](screenshots/Screenshot%202025-08-09%20215157.png)
-![Prizes](screenshots/Screenshot%202025-08-09%20215304.png)
 
 ### License
 MIT
