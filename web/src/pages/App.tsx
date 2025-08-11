@@ -34,6 +34,7 @@ export function App() {
     checkSetup();
   }, [token, user, navigate, setAuth]);
 
+  const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -55,7 +56,7 @@ export function App() {
     e.preventDefault();
     setError('');
     try {
-      const { data } = await api.post('/auth/login', { pin });
+      const { data } = await api.post('/auth/login', { username, pin });
       setAuth(data.token, data.user);
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login failed');
@@ -71,9 +72,18 @@ export function App() {
   if (!user) {
     return (
       <div className="container" style={{ maxWidth: 420, paddingTop: 80 }}>
-        <h1 style={{ marginBottom: 8 }}>Enter PIN</h1>
-        <p className="sub" style={{ marginBottom: 16 }}>This app is protected by a 4‑digit PIN.</p>
+        <h1 style={{ marginBottom: 8 }}>Sign in</h1>
+        <p className="sub" style={{ marginBottom: 16 }}>Enter your username and 4‑digit PIN.</p>
         <form onSubmit={login}>
+          <label>Username</label>
+          <input
+            value={username}
+            onChange={(e)=>setUsername(e.target.value)}
+            placeholder="eddie"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
           <label>PIN</label>
           <input
             type="password"
@@ -92,6 +102,7 @@ export function App() {
           {error && <div className="sub" style={{ color: '#f87171' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button className="button" type="submit">Unlock</button>
+            <button className="button secondary" type="button" onClick={()=>navigate('/setup')}>Sign up</button>
           </div>
         </form>
       </div>

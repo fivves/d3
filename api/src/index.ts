@@ -22,15 +22,16 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 // Setup status
 app.get('/api/setup/status', async (_req, res) => {
-  const user = await prisma.user.findFirst();
-  res.json({ initialized: !!user, hasPin: !!user?.pinHash });
+  const count = await prisma.user.count();
+  const first = count > 0 ? await prisma.user.findFirst({ orderBy: { id: 'asc' } }) : null;
+  res.json({ initialized: count > 0, hasPin: !!first?.pinHash });
 });
 
 // First-time setup: create the single user
 app.post('/api/setup', upload.single('avatar'), async (req, res) => {
   const existing = await prisma.user.findFirst();
   if (existing) return res.status(400).json({ error: 'Already set up' });
-  const { firstName, lastName, weeklySpendCents, pin } = req.body as any;
+  const { firstName, lastName, username, weeklySpendCents, pin } = req.body as any;
   const weekly = Number(weeklySpendCents) || 0;
   const pinHash = pin ? await hashPin(String(pin)) : null;
   const avatarData = req.file ? req.file.buffer : undefined;
@@ -39,10 +40,12 @@ app.post('/api/setup', upload.single('avatar'), async (req, res) => {
     data: {
       firstName,
       lastName,
+      username: username || null,
       weeklySpendCents: weekly,
       // Automatically set start date/time at account creation
       startDate: new Date(),
       pinHash,
+      isAdmin: true,
       avatarData: avatarData as any,
       avatarMimeType,
     },
@@ -52,26 +55,50 @@ app.post('/api/setup', upload.single('avatar'), async (req, res) => {
   res.json({ token, user: responseUser });
 });
 
-// Login with pin
-app.post('/api/auth/login', async (req, res) => {
-  const { pin } = req.body as any;
-  const user = await prisma.user.findFirst();
-  if (!user) return res.status(400).json({ error: 'Not set up' });
-  if (!user.pinHash) return res.status(400).json({ error: 'No PIN set' });
-  const ok = await comparePin(String(pin), user.pinHash);
-  if (!ok) return res.status(401).json({ error: 'Invalid PIN' });
+// Multi-user: signup and login
+app.post('/api/auth/signup', upload.single('avatar'), async (req, res) => {
+  const { firstName, lastName, username, weeklySpendCents, pin } = req.body as any;
+  if (!username) return res.status(400).json({ error: 'Username is required' });
+  const uname = String(username).toLowerCase();
+  if (!/^[a-z0-9_]{3,30}$/.test(uname)) return res.status(400).json({ error: 'Invalid username' });
+  const exists = await prisma.user.findUnique({ where: { username: uname } });
+  if (exists) return res.status(400).json({ error: 'Username already taken' });
+  const weekly = Number(weeklySpendCents) || 0;
+  const pinHash = pin ? await hashPin(String(pin)) : null;
+  const avatarData = req.file ? req.file.buffer : undefined;
+  const avatarMimeType = req.file ? req.file.mimetype : undefined;
+  const user = await prisma.user.create({
+    data: {
+      firstName,
+      lastName,
+      username: uname,
+      weeklySpendCents: weekly,
+      startDate: new Date(),
+      pinHash,
+      isAdmin: false,
+      avatarData: avatarData as any,
+      avatarMimeType,
+    },
+  });
   const token = signToken({ userId: user.id });
-  res.json({ token, user });
+  const responseUser = { ...user, avatarUrl: `/api/users/${user.id}/avatar` } as any;
+  res.json({ token, user: responseUser });
 });
 
-// Unlocked login if no PIN set
-app.post('/api/auth/unlocked', async (_req, res) => {
-  const user = await prisma.user.findFirst();
-  if (!user) return res.status(400).json({ error: 'Not set up' });
-  if (user.pinHash) return res.status(403).json({ error: 'PIN is set' });
+app.post('/api/auth/login', async (req, res) => {
+  const { username, pin } = req.body as any;
+  if (!username || !pin) return res.status(400).json({ error: 'Username and PIN are required' });
+  const user = await prisma.user.findUnique({ where: { username: String(username).toLowerCase() } });
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  if (!user.pinHash) return res.status(400).json({ error: 'No PIN set' });
+  const ok = await comparePin(String(pin), user.pinHash);
+  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
   const token = signToken({ userId: user.id });
-  res.json({ token, user });
+  const responseUser = { ...user, avatarUrl: user.avatarData ? `/api/users/${user.id}/avatar` : user.avatarUrl } as any;
+  res.json({ token, user: responseUser });
 });
+
+// Removed unlocked login for multi-user
 
 // Authenticated routes
 app.get('/api/me', authMiddleware, async (req, res) => {
