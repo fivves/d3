@@ -108,7 +108,6 @@ export function App() {
           <button className="hamburger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>
             ☰
           </button>
-          {pageTitle && <div className="nav-center" aria-current="page">{pageTitle}</div>}
         </div>
         <div className="nav-links" onClick={() => setMenuOpen(false)}>
           <NavLink className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`} to="/">Home</NavLink>
@@ -120,6 +119,7 @@ export function App() {
           <button className="button success" onClick={() => navigate('/log')}>Log</button>
           <button className="button secondary" onClick={logout}>Lock</button>
         </div>
+        {pageTitle && <div className="nav-center" aria-current="page">{pageTitle}</div>}
       </nav>
       <div className="container">
         <Outlet />
