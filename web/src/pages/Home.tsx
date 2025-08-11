@@ -90,23 +90,42 @@ export function Home() {
     return dayjs().startOf('day').diff(start.startOf('day'), 'day');
   }, [user]);
 
-  // Live count-up timer from startDate
+  // Live count-up timer from last use (resets on use day)
   const [now, setNow] = useState(dayjs());
   useEffect(() => {
     const id = window.setInterval(() => setNow(dayjs()), 1000);
     return () => clearInterval(id);
   }, []);
   const elapsed = useMemo(() => {
-    if (!user?.startDate) return null;
-    const start = dayjs(user.startDate);
-    const diffMs = Math.max(0, now.diff(start));
+    // Determine clean start time based on latest "used" log; fallback to account start
+    let cleanStart: dayjs.Dayjs | null = null;
+    if (logs && logs.length > 0) {
+      const sorted = [...logs].sort((a,b)=> new Date(b.date).getTime() - new Date(a.date).getTime());
+      const lastUsed = sorted.find(l => l.used);
+      if (lastUsed) {
+        const lastUsedDay = dayjs(lastUsed.date);
+        if (now.isSame(lastUsedDay, 'day')) {
+          // If used today, reset immediately at time of logging (now)
+          cleanStart = now;
+        } else {
+          // Otherwise, clean time starts at midnight after the last used day
+          cleanStart = lastUsedDay.add(1, 'day').startOf('day');
+        }
+      }
+    }
+    if (!cleanStart) {
+      if (!user?.startDate) return null;
+      cleanStart = dayjs(user.startDate);
+    }
+
+    const diffMs = Math.max(0, now.diff(cleanStart));
     const totalSeconds = Math.floor(diffMs / 1000);
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return { days, hours, minutes, seconds };
-  }, [now, user?.startDate]);
+  }, [now, user?.startDate, logs]);
 
   return (
     <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
