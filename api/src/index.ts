@@ -100,6 +100,12 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Removed unlocked login for multi-user
 
+// Admin guard helper
+async function requireAdmin(userId: number) {
+  const u = await prisma.user.findUnique({ where: { id: userId } });
+  return !!u?.isAdmin;
+}
+
 // Authenticated routes
 app.get('/api/me', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
@@ -445,7 +451,9 @@ app.get('/api/journal', authMiddleware, async (req, res) => {
 });
 
 // Admin: reset database (keep quotes)
-app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
+app.post('/api/admin/reset', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  if (!(await requireAdmin(userId))) return res.status(403).json({ error: 'Admin only' });
   await prisma.$transaction([
     prisma.purchase.deleteMany({}),
     prisma.transaction.deleteMany({}),
@@ -458,7 +466,9 @@ app.post('/api/admin/reset', authMiddleware, async (_req, res) => {
 });
 
 // Admin: backup/restore
-app.get('/api/admin/backup', authMiddleware, async (_req, res) => {
+app.get('/api/admin/backup', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  if (!(await requireAdmin(userId))) return res.status(403).json({ error: 'Admin only' });
   const [users, logs, txs, prizes, purchases, moneyEvents, quotes] = await Promise.all([
     prisma.user.findMany({}),
     prisma.dailyLog.findMany({}),
@@ -481,6 +491,8 @@ app.get('/api/admin/backup', authMiddleware, async (_req, res) => {
 });
 
 app.post('/api/admin/restore', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  if (!(await requireAdmin(userId))) return res.status(403).json({ error: 'Admin only' });
   const { users = [], logs = [], transactions = [], prizes = [], purchases = [], moneyEvents = [], quotes = [] } = req.body || {};
   // Wipe current data (keep quotes will be replaced below)
   await prisma.$transaction([
@@ -529,6 +541,25 @@ const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
   console.log(`API listening on :${port}`);
 });
+
+// One-time bootstrap to backfill username for single-user legacy installs
+(async () => {
+  try {
+    const count = await prisma.user.count();
+    if (count === 1) {
+      const u = await prisma.user.findFirst();
+      if (u && !u.username) {
+        const uname = 'eddie';
+        const safe = uname.toLowerCase();
+        const exists = await prisma.user.findUnique({ where: { username: safe } });
+        if (!exists) {
+          await prisma.user.update({ where: { id: u.id }, data: { username: safe, isAdmin: true } });
+          console.log('Backfilled username for legacy user: eddie');
+        }
+      }
+    }
+  } catch {}
+})();
 
 // Binary image routes
 app.get('/api/users/:id/avatar', async (req, res) => {
