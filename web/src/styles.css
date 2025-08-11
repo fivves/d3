@@ -12,14 +12,14 @@ a { color: inherit; text-decoration: none; }
 .spacer { flex:1; }
 .mobile-only { display:none; }
 @media (max-width: 720px) {
-  .navbar { flex-wrap: wrap; }
+  .navbar { flex-wrap: wrap; --topbar-height: 52px; }
   .navbar .hamburger { display:block; }
   .navbar .nav-links { display:none; width:100%; flex-direction:column; align-items:flex-start; padding-top:8px; }
   .navbar.open .nav-links { display:flex; }
   .navlink { padding:10px 0; }
   .mobile-only { display:block; }
   /* Keep title centered within the top bar row on mobile (not the whole expanded navbar) */
-  .nav-center { top: 28px; transform: translateX(-50%); }
+  .nav-center { top: calc(var(--topbar-height) / 2); transform: translate(-50%, -50%); }
 }
 .card { background: var(--card); padding:16px; border-radius:16px; border:1px solid #222; }
 .grid { display:grid; gap:16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
