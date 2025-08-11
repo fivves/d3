@@ -1,5 +1,7 @@
 ## D3 — Quit THC Tracker (Full‑Stack, Dockerized)
 
+NOTE: THIS APPLICATION WAS BUILT BY AI, SPECIFICALLY GPT5. HUMAN STEERED, MACHINE CODED.
+
 D3 helps you quit THC with daily logging, a unified sobriety timer, points, prizes, and motivation. It’s a React frontend with a Node/Express API and Postgres DB, packaged for easy home‑server deployment with Docker Compose.
 
 ### Screenshots
