@@ -352,23 +352,28 @@ app.get('/api/motivation/breath/status', authMiddleware, async (req, res) => {
 app.post('/api/motivation/breath/record', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const today = dayjs().startOf('day').toDate();
-  const result = await prisma.$transaction(async (tx) => {
-    let row = await tx.breathDaily.findFirst({ where: { userId, date: today }, forUpdate: true } as any);
-    if (!row) {
-      row = await tx.breathDaily.create({ data: { userId, date: today, count: 0, scored: false } });
-    }
-    const nextCount = row.count + 1;
+  try {
+    const existing = await prisma.breathDaily.upsert({
+      where: { userId_date: { userId, date: today } as any },
+      create: { userId, date: today, count: 0, scored: false },
+      update: {},
+    });
+    const nextCount = existing.count + 1;
     let awarded = false;
-    if (nextCount >= 3 && !row.scored) {
-      await tx.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Breathing complete (+1)', date: new Date() } });
-      row = await tx.breathDaily.update({ where: { id: row.id }, data: { count: nextCount, scored: true } });
+    if (nextCount >= 3 && !existing.scored) {
+      await prisma.$transaction([
+        prisma.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Breathing complete (+1)', date: new Date() } }),
+        prisma.breathDaily.update({ where: { id: existing.id }, data: { count: { increment: 1 }, scored: true } }),
+      ]);
       awarded = true;
     } else {
-      row = await tx.breathDaily.update({ where: { id: row.id }, data: { count: nextCount } });
+      await prisma.breathDaily.update({ where: { id: existing.id }, data: { count: { increment: 1 } } });
     }
-    return { row, awarded };
-  });
-  res.json({ date: result.row.date, count: result.row.count, scored: result.row.scored, awarded: result.awarded });
+    const row = await prisma.breathDaily.findUnique({ where: { id: existing.id } });
+    res.json({ date: today, count: row?.count || 0, scored: !!row?.scored, awarded });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to record session' });
+  }
 });
 
 // Journal: get today's entry (if any)
