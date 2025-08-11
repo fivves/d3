@@ -161,6 +161,7 @@ function AdminTools() {
   const [err, setErr] = useState('');
   const [pin, setPin] = useState('');
   const [target, setTarget] = useState<number|''>('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -185,6 +186,20 @@ function AdminTools() {
     }
   }
 
+  async function deleteUser(id: number) {
+    if (!confirm('Permanently delete this user and all their data? This cannot be undone.')) return;
+    setBusy(true); setErr('');
+    try {
+      await api.delete(`/admin/users/${id}`);
+      setUsers(users.filter(u => u.id !== id));
+      if (target === id) setTarget('');
+    } catch (e:any) {
+      setErr(e?.response?.data?.error || 'Failed to delete user');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <div className="sub">User list</div>
@@ -194,6 +209,9 @@ function AdminTools() {
             <div className="left">
               <div style={{ fontWeight: 700 }}>{u.username || '(no username)'} {u.isAdmin && <span className="pill">admin</span>}</div>
               <div className="sub">{u.firstName} {u.lastName}</div>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button className="button secondary" onClick={()=>deleteUser(u.id)} disabled={busy || u.isAdmin}>Delete</button>
             </div>
           </div>
         ))}

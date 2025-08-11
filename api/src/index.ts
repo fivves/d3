@@ -133,6 +133,33 @@ app.post('/api/admin/users/:id/reset-pin', authMiddleware, async (req, res) => {
   res.json({ user: { id: updated.id, username: updated.username, hasPin: !!updated.pinHash } });
 });
 
+// Admin: permanently delete a user and all associated data
+app.delete('/api/admin/users/:id', authMiddleware, async (req, res) => {
+  const actorId = (req as any).userId as number;
+  if (!(await requireAdmin(actorId))) return res.status(403).json({ error: 'Admin only' });
+  const id = Number(req.params.id);
+  try {
+    await prisma.$transaction(async (tx) => {
+      const prizes = await tx.prize.findMany({ where: { userId: id }, select: { id: true } });
+      const prizeIds = prizes.map(p => p.id);
+      if (prizeIds.length > 0) {
+        await tx.purchase.deleteMany({ where: { prizeId: { in: prizeIds } } });
+      }
+      await tx.purchase.deleteMany({ where: { userId: id } });
+      await tx.transaction.deleteMany({ where: { userId: id } });
+      await tx.moneyEvent.deleteMany({ where: { userId: id } });
+      await tx.dailyLog.deleteMany({ where: { userId: id } });
+      // @ts-ignore breathDaily exists in schema
+      await (tx as any).breathDaily.deleteMany({ where: { userId: id } });
+      await tx.prize.deleteMany({ where: { userId: id } });
+      await tx.user.delete({ where: { id } });
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
 // Authenticated routes
 app.get('/api/me', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
