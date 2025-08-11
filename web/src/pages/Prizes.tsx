@@ -6,6 +6,8 @@ type Prize = { id:number; name:string; description?:string|null; costPoints:numb
 export function Prizes() {
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [bank, setBank] = useState<{ balance:number; totals:{ earned:number; spent:number } } | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [purchasesOpen, setPurchasesOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [cost, setCost] = useState('');
@@ -146,42 +148,72 @@ export function Prizes() {
           </div>
         </div>
         <div className="card fancy">
-          <div className="card-title"><span className="icon">🎁</span>Add New Prize</div>
-          <form onSubmit={addPrize}>
-            <label>Name</label>
-            <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Massage" />
-            <label>Description</label>
-            <input value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="60 minute massage" />
-            <label>Cost (points)</label>
-            <input inputMode="numeric" value={cost} onChange={(e)=>setCost(e.target.value)} placeholder="200" />
-            <label>Image</label>
-            <input type="file" accept="image/*" onChange={(e)=>setImage(e.target.files?.[0]||null)} />
-            <button className="button" type="submit">Add prize</button>
-            {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
-          </form>
-        </div>
-        <div className="card fancy" style={{ display:'flex', flexDirection:'column', minHeight: 320 }}>
-          <div className="card-title"><span className="icon">✅</span>Purchases</div>
-          <div style={{ flex:1, display:'flex' }}>
-            {purchased.length === 0 ? (
-              <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <div className="card" style={{ textAlign:'center' }}>
-                  <div className="sub">No purchases yet. Purchase some to view them here.</div>
-                </div>
-              </div>
-            ) : (
-              <div className="grid" style={{ width:'100%' }}>
-                {purchased.map(p => (
-                  <div key={p.id} className="card">
-                    {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
-                    <div style={{ fontWeight: 700 }}>{p.name}</div>
-                    <div className="sub">{p.description}</div>
-                    <button className="button secondary" onClick={()=>restock(p.id)}>Replace with new copy</button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div
+            className="card-title"
+            style={{ justifyContent:'space-between', cursor:'pointer' }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={addOpen}
+            aria-controls="add-prize-panel"
+            onClick={() => setAddOpen(o => !o)}
+            onKeyDown={(e)=>{ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAddOpen(o => !o); } }}
+          >
+            <span style={{ display:'flex', alignItems:'center', gap:8 }}><span className="icon">🎁</span>Add New Prize</span>
+            <span aria-hidden>{addOpen ? '▾' : '▸'}</span>
           </div>
+          {addOpen && (
+            <div id="add-prize-panel">
+              <form onSubmit={addPrize}>
+                <label>Name</label>
+                <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Massage" />
+                <label>Description</label>
+                <input value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="60 minute massage" />
+                <label>Cost (points)</label>
+                <input inputMode="numeric" value={cost} onChange={(e)=>setCost(e.target.value)} placeholder="200" />
+                <label>Image</label>
+                <input type="file" accept="image/*" onChange={(e)=>setImage(e.target.files?.[0]||null)} />
+                <button className="button" type="submit">Add prize</button>
+                {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
+              </form>
+            </div>
+          )}
+        </div>
+        <div className="card fancy" style={{ display:'flex', flexDirection:'column' }}>
+          <div
+            className="card-title"
+            style={{ justifyContent:'space-between', cursor:'pointer' }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={purchasesOpen}
+            aria-controls="purchases-panel"
+            onClick={() => setPurchasesOpen(o => !o)}
+            onKeyDown={(e)=>{ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPurchasesOpen(o => !o); } }}
+          >
+            <span style={{ display:'flex', alignItems:'center', gap:8 }}><span className="icon">✅</span>Purchases</span>
+            <span aria-hidden>{purchasesOpen ? '▾' : '▸'}</span>
+          </div>
+          {purchasesOpen && (
+            <div id="purchases-panel" style={{ flex:1, display:'flex' }}>
+              {purchased.length === 0 ? (
+                <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div className="card" style={{ textAlign:'center' }}>
+                    <div className="sub">No purchases yet. Purchase some to view them here.</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid" style={{ width:'100%' }}>
+                  {purchased.map(p => (
+                    <div key={p.id} className="card">
+                      {p.imageUrl && <img src={p.imageUrl} style={{ width:'100%', height:140, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
+                      <div style={{ fontWeight: 700 }}>{p.name}</div>
+                      <div className="sub">{p.description}</div>
+                      <button className="button secondary" onClick={()=>restock(p.id)}>Replace with new copy</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
