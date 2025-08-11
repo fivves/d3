@@ -79,33 +79,17 @@ export default function MakeItObviousWidget() {
   const { user } = useAppStore();
   const STORAGE_KEYS = useMemo(() => makeStorageKeys(user?.username, user?.id), [user?.username, user?.id]);
   const items = useMemo(() => DEFAULT_ITEMS, []);
-  const [checked, setChecked] = useState<boolean[]>(() => {
-    try {
-      const storedDate = localStorage.getItem(STORAGE_KEYS.date);
-      const stored = localStorage.getItem(STORAGE_KEYS.checked);
-      if (storedDate === todayKey() && stored) {
-        const arr = JSON.parse(stored) as boolean[];
-        return items.map((_, i) => Boolean(arr[i]));
-      }
-    } catch {}
-    return items.map(() => false);
-  });
-  const [scored, setScored] = useState<'complete' | 'missed' | ''>(() => {
-    try {
-      const storedDate = localStorage.getItem(STORAGE_KEYS.date);
-      const s = localStorage.getItem(STORAGE_KEYS.scored) as any;
-      if (storedDate === todayKey() && (s === 'complete' || s === 'missed')) return s;
-    } catch {}
-    return '';
-  });
+  const [checked, setChecked] = useState<boolean[]>(items.map(() => false));
+  const [scored, setScored] = useState<'complete' | 'missed' | ''>('');
 
   const allDone = checked.every(Boolean);
 
   useEffect(() => {
-    // Persist for today
-    localStorage.setItem(STORAGE_KEYS.date, todayKey());
-    localStorage.setItem(STORAGE_KEYS.checked, JSON.stringify(checked));
-  }, [checked]);
+    // Persist to API for today
+    (async () => {
+      try { await api.put('/motivation/checklist/status', { checked, scored: scored || null }); } catch {}
+    })();
+  }, [checked, scored]);
 
   useEffect(() => {
     // Award points once when all tasks are complete
@@ -114,7 +98,7 @@ export default function MakeItObviousWidget() {
         try {
           await api.post('/motivation/checklist/score', { status: 'complete', date: todayKey() });
           setScored('complete');
-          localStorage.setItem(STORAGE_KEYS.scored, 'complete');
+          try { await api.put('/motivation/checklist/status', { checked, scored: 'complete' }); } catch {}
           confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         } catch (e) {
           // ignore silently for now
@@ -126,50 +110,30 @@ export default function MakeItObviousWidget() {
 
   useEffect(() => {
     // On mount, if stored date is yesterday and not complete, mark missed
-    async function handleMissedIfNeeded() {
+    async function syncFromApi() {
       try {
-        const storedDate = localStorage.getItem(STORAGE_KEYS.date);
-        const storedScored = localStorage.getItem(STORAGE_KEYS.scored);
-        if (!storedDate) return;
-        const isToday = storedDate === todayKey();
-        if (isToday) return; // nothing to do
-
-        // We are on a new day. If previous day not completed and not scored, deduct 5.
-        const prevAllDone = (JSON.parse(localStorage.getItem(STORAGE_KEYS.checked) || '[]') as boolean[]).every(Boolean);
-        if (!prevAllDone && storedScored !== 'missed') {
-          await api.post('/motivation/checklist/score', { status: 'missed', date: storedDate });
-        }
-
-        // Reset for today
-        localStorage.setItem(STORAGE_KEYS.date, todayKey());
-        localStorage.setItem(STORAGE_KEYS.checked, JSON.stringify(items.map(() => false)));
-        localStorage.setItem(STORAGE_KEYS.scored, '');
-        setChecked(items.map(() => false));
-        setScored('');
+        const { data } = await api.get('/motivation/checklist/status');
+        const arr = Array.isArray(data.checked) ? data.checked : [];
+        setChecked(items.map((_, i) => Boolean(arr[i])));
+        setScored(data.scored === 'complete' || data.scored === 'missed' ? data.scored : '');
       } catch {}
     }
-    handleMissedIfNeeded();
+    syncFromApi();
 
-    const timer = window.setTimeout(() => {
+    const timer = window.setTimeout(async () => {
       // Midnight rollover: if not complete yet and not scored missed, score missed then reset
-      (async () => {
-        try {
-          const storedScored = localStorage.getItem(STORAGE_KEYS.scored);
-          if (!allDone && storedScored !== 'missed') {
-            await api.post('/motivation/checklist/score', { status: 'missed', date: todayKey() });
-          }
-        } catch {}
-        // Reset
-        localStorage.setItem(STORAGE_KEYS.date, todayKey());
-        localStorage.setItem(STORAGE_KEYS.checked, JSON.stringify(items.map(() => false)));
-        localStorage.setItem(STORAGE_KEYS.scored, '');
-        setChecked(items.map(() => false));
-        setScored('');
-      })();
+      try {
+        if (!allDone && scored !== 'missed') {
+          await api.post('/motivation/checklist/score', { status: 'missed', date: todayKey() });
+        }
+      } catch {}
+      setChecked(items.map(() => false));
+      setScored('');
+      try { await api.put('/motivation/checklist/status', { checked: items.map(() => false), scored: null }); } catch {}
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [STORAGE_KEYS.date, STORAGE_KEYS.checked, STORAGE_KEYS.scored]);
+  }, []);
 
   function toggle(idx: number) {
     setChecked((prev) => {

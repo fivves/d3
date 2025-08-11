@@ -420,6 +420,28 @@ app.post('/api/motivation/checklist/score', authMiddleware, async (req, res) => 
   res.json({ transaction: tx });
 });
 
+// Checklist daily state
+app.get('/api/motivation/checklist/status', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const today = dayjs().startOf('day').toDate();
+  const row = await (prisma as any).checklistDaily.findFirst({ where: { userId, date: today } });
+  const checked = row?.checked || [];
+  const scored = row?.scored || '';
+  res.json({ date: today, checked, scored });
+});
+
+app.put('/api/motivation/checklist/status', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const { checked, scored } = req.body as any;
+  const today = dayjs().startOf('day').toDate();
+  const row = await (prisma as any).checklistDaily.upsert({
+    where: { userId_date: { userId, date: today } as any },
+    create: { userId, date: today, checked: checked || [], scored: scored || null },
+    update: { checked: checked || [], scored: scored || null },
+  });
+  res.json({ date: row.date, checked: row.checked, scored: row.scored || '' });
+});
+
 // Motivation: Urge surfing completion (+1 per full 15-min session)
 app.post('/api/motivation/urge/complete', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
