@@ -35,6 +35,9 @@ export function App() {
   }, [token, user, navigate, setAuth]);
 
   const [username, setUsername] = useState('');
+  const [recentUsers, setRecentUsers] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('recentUsers') || '[]') || []; } catch { return []; }
+  });
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,6 +61,12 @@ export function App() {
     try {
       const { data } = await api.post('/auth/login', { username, pin });
       setAuth(data.token, data.user);
+      try {
+        const u = String(username).toLowerCase();
+        const next = [u, ...recentUsers.filter(r => r !== u)].slice(0, 5);
+        setRecentUsers(next);
+        localStorage.setItem('recentUsers', JSON.stringify(next));
+      } catch {}
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login failed');
     }
@@ -76,14 +85,27 @@ export function App() {
         <p className="sub" style={{ marginBottom: 16 }}>Enter your username and 4‑digit PIN.</p>
         <form onSubmit={login}>
           <label>Username</label>
-          <input
-            value={username}
-            onChange={(e)=>setUsername(e.target.value)}
-            placeholder="eddie"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-          />
+          <div className="row">
+            <input
+              value={username}
+              onChange={(e)=>setUsername(e.target.value)}
+              placeholder="eddie"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              style={{ flex: 1 }}
+            />
+            {recentUsers.length > 0 && (
+              <select
+                value={username || ''}
+                onChange={(e)=>setUsername(e.target.value)}
+                style={{ width: 160 }}
+              >
+                <option value="">Recent…</option>
+                {recentUsers.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            )}
+          </div>
           <label>PIN</label>
           <input
             type="password"

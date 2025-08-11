@@ -8,6 +8,8 @@ type User = {
   weeklySpendCents: number;
   startDate?: string | null;
   longestStreakDays?: number;
+  username?: string | null;
+  isAdmin?: boolean;
 };
 
 interface AppState {

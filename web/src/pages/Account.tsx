@@ -121,7 +121,16 @@ export function Account() {
         {restoreErr && <div className="sub" style={{ color:'#f87171' }}>{restoreErr}</div>}
 
         <div style={{ height: 16 }} />
-        <div className="card-title" style={{ marginTop: 8 }}><span className="icon">⚠️</span>Danger zone</div>
+        {user?.isAdmin ? (
+          <>
+            <div className="card-title" style={{ marginTop: 8 }}><span className="icon">🛠️</span>Admin tools</div>
+            <AdminTools />
+            <div style={{ height: 16 }} />
+            <div className="card-title" style={{ marginTop: 8 }}><span className="icon">⚠️</span>Danger zone</div>
+          </>
+        ) : (
+          <div className="card-title" style={{ marginTop: 8 }}><span className="icon">⚠️</span>Danger zone</div>
+        )}
         <div className="sub">Resetting will erase your user, logs, points, prizes, and savings. This cannot be undone.</div>
         <div style={{ marginTop: 8 }}>
           <label>Type "RESET" to confirm</label>
@@ -143,6 +152,63 @@ export function Account() {
           }}
         >Reset database</button>
       </div>
+    </div>
+  );
+}
+
+function AdminTools() {
+  const [users, setUsers] = useState<Array<{id:number; username:string|null; firstName:string; lastName:string; isAdmin:boolean}>>([]);
+  const [err, setErr] = useState('');
+  const [pin, setPin] = useState('');
+  const [target, setTarget] = useState<number|''>('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get('/admin/users');
+        setUsers(data.users || []);
+      } catch (e:any) {
+        setErr(e?.response?.data?.error || 'Failed to load users');
+      }
+    })();
+  }, []);
+
+  async function resetPin() {
+    setErr('');
+    if (!target) return;
+    try {
+      await api.post(`/admin/users/${target}/reset-pin`, { newPin: pin });
+      setPin('');
+      alert('PIN updated');
+    } catch (e:any) {
+      setErr(e?.response?.data?.error || 'Failed to reset PIN');
+    }
+  }
+
+  return (
+    <div>
+      <div className="sub">User list</div>
+      <div className="list" style={{ marginTop: 8 }}>
+        {users.map(u => (
+          <div key={u.id} className="list-item">
+            <div className="left">
+              <div style={{ fontWeight: 700 }}>{u.username || '(no username)'} {u.isAdmin && <span className="pill">admin</span>}</div>
+              <div className="sub">{u.firstName} {u.lastName}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ height: 12 }} />
+      <div className="sub">Reset a user's PIN</div>
+      <div className="row">
+        <select value={target} onChange={(e)=>setTarget(Number(e.target.value))}>
+          <option value="">Select user…</option>
+          {users.map(u => <option key={u.id} value={u.id}>{u.username || `${u.firstName} ${u.lastName}`}</option>)}
+        </select>
+        <input inputMode="numeric" maxLength={4} placeholder="1234" value={pin} onChange={(e)=>setPin(e.target.value)} />
+        <button className="button" onClick={resetPin} disabled={!target || !pin}>Set PIN</button>
+      </div>
+      {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
     </div>
   );
 }

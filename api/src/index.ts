@@ -106,6 +106,33 @@ async function requireAdmin(userId: number) {
   return !!u?.isAdmin;
 }
 
+// Admin: list users (basic info)
+app.get('/api/admin/users', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  if (!(await requireAdmin(userId))) return res.status(403).json({ error: 'Admin only' });
+  const users = await prisma.user.findMany({
+    select: { id: true, username: true, firstName: true, lastName: true, isAdmin: true, createdAt: true },
+    orderBy: { createdAt: 'asc' }
+  });
+  res.json({ users });
+});
+
+// Admin: reset/set a user's PIN
+app.post('/api/admin/users/:id/reset-pin', authMiddleware, async (req, res) => {
+  const actorId = (req as any).userId as number;
+  if (!(await requireAdmin(actorId))) return res.status(403).json({ error: 'Admin only' });
+  const id = Number(req.params.id);
+  const { newPin } = req.body as any;
+  const data: any = {};
+  if (newPin !== undefined && newPin !== null && String(newPin).length > 0) {
+    data.pinHash = await hashPin(String(newPin));
+  } else {
+    data.pinHash = null;
+  }
+  const updated = await prisma.user.update({ where: { id }, data });
+  res.json({ user: { id: updated.id, username: updated.username, hasPin: !!updated.pinHash } });
+});
+
 // Authenticated routes
 app.get('/api/me', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
