@@ -336,8 +336,39 @@ app.post('/api/motivation/checklist/score', authMiddleware, async (req, res) => 
 // Motivation: Urge surfing completion (+1 per full 15-min session)
 app.post('/api/motivation/urge/complete', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const tx = await prisma.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Completed 15‑min urge surf', date: new Date() } });
+  const tx = await prisma.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Breathing complete (+1)', date: new Date() } });
   res.json({ transaction: tx });
+});
+
+// Breathing (1-min sessions): get today's status
+app.get('/api/motivation/breath/status', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const today = dayjs().startOf('day').toDate();
+  const row = await prisma.breathDaily.findFirst({ where: { userId, date: today } });
+  res.json({ date: today, count: row?.count || 0, scored: !!row?.scored });
+});
+
+// Breathing (1-min sessions): record one session, award +1 on 3rd (server-side)
+app.post('/api/motivation/breath/record', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const today = dayjs().startOf('day').toDate();
+  const result = await prisma.$transaction(async (tx) => {
+    let row = await tx.breathDaily.findFirst({ where: { userId, date: today }, forUpdate: true } as any);
+    if (!row) {
+      row = await tx.breathDaily.create({ data: { userId, date: today, count: 0, scored: false } });
+    }
+    const nextCount = row.count + 1;
+    let awarded = false;
+    if (nextCount >= 3 && !row.scored) {
+      await tx.transaction.create({ data: { userId, points: 1, type: 'earn', note: 'Breathing complete (+1)', date: new Date() } });
+      row = await tx.breathDaily.update({ where: { id: row.id }, data: { count: nextCount, scored: true } });
+      awarded = true;
+    } else {
+      row = await tx.breathDaily.update({ where: { id: row.id }, data: { count: nextCount } });
+    }
+    return { row, awarded };
+  });
+  res.json({ date: result.row.date, count: result.row.count, scored: result.row.scored, awarded: result.awarded });
 });
 
 // Journal: get today's entry (if any)

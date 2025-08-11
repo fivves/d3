@@ -21,6 +21,7 @@ function msUntilNextMidnight(): number {
   return Math.max(0, +next - +now);
 }
 
+// Deprecated local storage keys (kept for graceful migration)
 const STORAGE_KEYS = {
   date: 'urge:date',
   count: 'urge:count',
@@ -33,22 +34,8 @@ export default function UrgeSurfingWidget({ initialMinutes = 1 }: UrgeSurfingWid
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [breathMs, setBreathMs] = useState<number>(0); // 0..10000
   const [breatheKey, setBreatheKey] = useState<number>(0);
-  const [count, setCount] = useState<number>(() => {
-    try {
-      const d = localStorage.getItem(STORAGE_KEYS.date);
-      const c = localStorage.getItem(STORAGE_KEYS.count);
-      if (d === todayKey() && c != null) return Math.max(0, Number(c) || 0);
-    } catch {}
-    return 0;
-  });
-  const [scored, setScored] = useState<boolean>(() => {
-    try {
-      const d = localStorage.getItem(STORAGE_KEYS.date);
-      const s = localStorage.getItem(STORAGE_KEYS.scored);
-      return d === todayKey() && s === 'true';
-    } catch {}
-    return false;
-  });
+  const [count, setCount] = useState<number>(0);
+  const [scored, setScored] = useState<boolean>(false);
 
   const intervalRef = useRef<number | null>(null);
   const lastTickRef = useRef<number | null>(null);
@@ -85,26 +72,23 @@ export default function UrgeSurfingWidget({ initialMinutes = 1 }: UrgeSurfingWid
     };
   }, [isRunning]);
 
-  // Initialize / rollover for a new day
+  // Load today's status from API and set midnight rollover just to refetch UI
   useEffect(() => {
-    try {
-      const d = localStorage.getItem(STORAGE_KEYS.date);
-      if (d !== todayKey()) {
-        localStorage.setItem(STORAGE_KEYS.date, todayKey());
-        localStorage.setItem(STORAGE_KEYS.count, '0');
-        localStorage.setItem(STORAGE_KEYS.scored, '');
-        setCount(0);
-        setScored(false);
-      }
-    } catch {}
-    const timer = window.setTimeout(() => {
+    (async () => {
       try {
-        localStorage.setItem(STORAGE_KEYS.date, todayKey());
-        localStorage.setItem(STORAGE_KEYS.count, '0');
-        localStorage.setItem(STORAGE_KEYS.scored, '');
+        const { data } = await api.get('/motivation/breath/status');
+        setCount(data.count || 0);
+        setScored(!!data.scored);
       } catch {}
-      setCount(0);
-      setScored(false);
+    })();
+    const timer = window.setTimeout(() => {
+      (async () => {
+        try {
+          const { data } = await api.get('/motivation/breath/status');
+          setCount(data.count || 0);
+          setScored(!!data.scored);
+        } catch {}
+      })();
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
   }, []);
@@ -146,25 +130,16 @@ export default function UrgeSurfingWidget({ initialMinutes = 1 }: UrgeSurfingWid
   useEffect(() => {
     if (remainingMs <= 0 && !isRunning && totalMs > 0) {
       // Completed a 1-min session
-      setCount((prev) => {
-        const next = prev + 1;
+      (async () => {
         try {
-          localStorage.setItem(STORAGE_KEYS.date, todayKey());
-          localStorage.setItem(STORAGE_KEYS.count, String(next));
+          const { data } = await api.post('/motivation/breath/record');
+          setCount(data.count || 0);
+          setScored(!!data.scored);
+          if (data.awarded) {
+            confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+          }
         } catch {}
-        // Award once when reaching 3, if not already scored today
-        if (next >= 3 && !scored) {
-          (async () => {
-            try {
-              await api.post('/motivation/urge/complete');
-              confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
-              setScored(true);
-              try { localStorage.setItem(STORAGE_KEYS.scored, 'true'); } catch {}
-            } catch {}
-          })();
-        }
-        return next;
-      });
+      })();
       // Reset timer to ready state after completion
       setRemainingMs(totalMs);
       setBreathMs(0);
