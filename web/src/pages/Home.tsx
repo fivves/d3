@@ -233,7 +233,7 @@ export function Home() {
             <div className="card-title"><span className="icon">🌊</span>Urge Surfing</div>
             <div className="sub">Cravings rise and fall like waves. Ride one for 15 minutes.</div>
           </div>
-          <div className="card-cta"><Link className="button" to="/motivation">Start 15‑min surf</Link></div>
+          <div className="card-cta"><Link className="button" to="/motivation">Start surfing</Link></div>
         </div>
       </div>
     </div>
