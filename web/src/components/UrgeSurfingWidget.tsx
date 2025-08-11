@@ -1,16 +1,54 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import api from '../lib/api';
+import confetti from 'canvas-confetti';
 
 type UrgeSurfingWidgetProps = {
   initialMinutes?: number;
 };
 
-export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWidgetProps) {
+function todayKey(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function msUntilNextMidnight(): number {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(0, +next - +now);
+}
+
+const STORAGE_KEYS = {
+  date: 'urge:date',
+  count: 'urge:count',
+  scored: 'urge:scored',
+};
+
+export default function UrgeSurfingWidget({ initialMinutes = 1 }: UrgeSurfingWidgetProps) {
   const totalMs = useMemo(() => initialMinutes * 60 * 1000, [initialMinutes]);
   const [remainingMs, setRemainingMs] = useState<number>(totalMs);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [breathMs, setBreathMs] = useState<number>(0); // 0..10000
   const [breatheKey, setBreatheKey] = useState<number>(0);
+  const [count, setCount] = useState<number>(() => {
+    try {
+      const d = localStorage.getItem(STORAGE_KEYS.date);
+      const c = localStorage.getItem(STORAGE_KEYS.count);
+      if (d === todayKey() && c != null) return Math.max(0, Number(c) || 0);
+    } catch {}
+    return 0;
+  });
+  const [scored, setScored] = useState<boolean>(() => {
+    try {
+      const d = localStorage.getItem(STORAGE_KEYS.date);
+      const s = localStorage.getItem(STORAGE_KEYS.scored);
+      return d === todayKey() && s === 'true';
+    } catch {}
+    return false;
+  });
 
   const intervalRef = useRef<number | null>(null);
   const lastTickRef = useRef<number | null>(null);
@@ -46,6 +84,30 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
       lastTickRef.current = null;
     };
   }, [isRunning]);
+
+  // Initialize / rollover for a new day
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem(STORAGE_KEYS.date);
+      if (d !== todayKey()) {
+        localStorage.setItem(STORAGE_KEYS.date, todayKey());
+        localStorage.setItem(STORAGE_KEYS.count, '0');
+        localStorage.setItem(STORAGE_KEYS.scored, '');
+        setCount(0);
+        setScored(false);
+      }
+    } catch {}
+    const timer = window.setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEYS.date, todayKey());
+        localStorage.setItem(STORAGE_KEYS.count, '0');
+        localStorage.setItem(STORAGE_KEYS.scored, '');
+      } catch {}
+      setCount(0);
+      setScored(false);
+    }, msUntilNextMidnight());
+    return () => clearTimeout(timer);
+  }, []);
 
   const handlePrimary = () => {
     // Finished → restart fresh and start running
@@ -83,10 +145,30 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
 
   useEffect(() => {
     if (remainingMs <= 0 && !isRunning && totalMs > 0) {
-      // Completed a full session → award +1 point
-      (async () => {
-        try { await api.post('/motivation/urge/complete'); } catch {}
-      })();
+      // Completed a 1-min session
+      setCount((prev) => {
+        const next = prev + 1;
+        try {
+          localStorage.setItem(STORAGE_KEYS.date, todayKey());
+          localStorage.setItem(STORAGE_KEYS.count, String(next));
+        } catch {}
+        // Award once when reaching 3, if not already scored today
+        if (next >= 3 && !scored) {
+          (async () => {
+            try {
+              await api.post('/motivation/urge/complete');
+              confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+              setScored(true);
+              try { localStorage.setItem(STORAGE_KEYS.scored, 'true'); } catch {}
+            } catch {}
+          })();
+        }
+        return next;
+      });
+      // Reset timer to ready state after completion
+      setRemainingMs(totalMs);
+      setBreathMs(0);
+      setBreatheKey((k) => k + 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingMs, isRunning]);
@@ -110,11 +192,11 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
       <div className="row" style={{ justifyContent: 'center' }}>
         <button className="button" onClick={handlePrimary}>
           {remainingMs <= 0
-            ? 'Restart 15:00'
+            ? 'Restart 1:00'
             : isRunning
             ? 'Pause'
             : remainingMs === totalMs
-            ? 'Start 15:00'
+            ? 'Start 1:00'
             : 'Resume'}
         </button>
         <button className="button secondary" onClick={handleReset}>Reset</button>
@@ -124,8 +206,9 @@ export default function UrgeSurfingWidget({ initialMinutes = 15 }: UrgeSurfingWi
         Breathe slowly. Notice sensations rise and fall like a wave.
       </div>
  
-      <div style={{ display:'flex', gap:8, marginTop:12, justifyContent:'center' }}>
-        <div className="pill">Complete 15 minutes to earn +1 point</div>
+      <div style={{ display:'flex', gap:8, marginTop:12, justifyContent:'center', alignItems:'center' }}>
+        <div className="pill">1‑min sessions today: <b>{Math.min(count, 3)}</b>/3</div>
+        <div className="pill">Earn +1 at 3/day</div>
       </div>
     </div>
   );
