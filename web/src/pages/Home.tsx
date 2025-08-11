@@ -55,8 +55,9 @@ export function Home() {
 
     function computeMio() {
       try {
-        const date = localStorage.getItem('mio:date');
-        const raw = localStorage.getItem('mio:checked');
+        const scope = (user?.username && user.username.trim()) ? user.username.trim().toLowerCase() : String(user?.id || 'guest');
+        const date = localStorage.getItem(`mio:${scope}:date`);
+        const raw = localStorage.getItem(`mio:${scope}:checked`);
         if (date === todayKey() && raw) {
           const arr = JSON.parse(raw) as boolean[];
           const done = arr.filter(Boolean).length;
@@ -71,7 +72,7 @@ export function Home() {
       setMioProgress({ done: 0, total: 6 });
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
-  }, []);
+  }, [user?.username, user?.id]);
 
   // Single source of truth: clean start timestamp
   const cleanStartAt = useMemo(() => {

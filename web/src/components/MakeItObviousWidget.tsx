@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import confetti from 'canvas-confetti';
 import api from '../lib/api';
+import { useAppStore } from '../store';
 
 type ChecklistItem = {
   id: string;
@@ -56,11 +57,14 @@ const DEFAULT_ITEMS: ChecklistItem[] = [
   },
 ];
 
-const STORAGE_KEYS = {
-  date: 'mio:date',
-  checked: 'mio:checked',
-  scored: 'mio:scored', // '', 'complete', 'missed'
-};
+function makeStorageKeys(username?: string | null, userId?: number) {
+  const scope = (username && username.trim()) ? username.trim().toLowerCase() : (userId ? String(userId) : 'guest');
+  return {
+    date: `mio:${scope}:date`,
+    checked: `mio:${scope}:checked`,
+    scored: `mio:${scope}:scored`, // '', 'complete', 'missed'
+  } as const;
+}
 
 function todayKey(): string {
   return dayjs().format('YYYY-MM-DD');
@@ -72,6 +76,8 @@ function msUntilNextMidnight(): number {
 }
 
 export default function MakeItObviousWidget() {
+  const { user } = useAppStore();
+  const STORAGE_KEYS = useMemo(() => makeStorageKeys(user?.username, user?.id), [user?.username, user?.id]);
   const items = useMemo(() => DEFAULT_ITEMS, []);
   const [checked, setChecked] = useState<boolean[]>(() => {
     try {
@@ -163,7 +169,7 @@ export default function MakeItObviousWidget() {
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [STORAGE_KEYS.date, STORAGE_KEYS.checked, STORAGE_KEYS.scored]);
 
   function toggle(idx: number) {
     setChecked((prev) => {
