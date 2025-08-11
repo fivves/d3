@@ -19,7 +19,7 @@ D3 helps you quit THC with daily logging, a unified sobriety timer, points, priz
 - Motivation:
   - Quotes (curated pool, daily rotation)
   - Make It Obvious checklist (+1 if complete; −5 if missed at day rollover)
-  - Urge Surfing timer (+1 for each full 15‑min session)
+  - Breathing (1‑minute sessions): do 3 sessions in a day to earn +1 (resets at midnight; additional sessions give no extra points)
 - Journal: today’s entry and mood; +1 point on first non‑empty entry of the day
 - Mobile‑friendly UI; fixed top navbar; basic offline caching via service worker
 
@@ -56,6 +56,14 @@ Services:
 - API: proxied by web at `/api` (direct `http://localhost:7289`)
 - DB: Postgres (internal only)
 
+### Points System
+- Clean day (daily log No): +10
+- Use day (daily log Yes): −20
+- Make It Obvious checklist: +1 when completed; −5 if missed when day rolls over
+- Breathing widget: +1 once per day upon completing 3× 1‑minute sessions (no extra points after 3)
+- Journal: +1 on the first non‑empty entry of the day
+- Prizes: cost points as configured; purchasing deducts that amount
+
 ### API Overview
 - Auth/setup
   - `POST /api/setup` first‑time setup (creates single user + optional PIN)
@@ -73,7 +81,7 @@ Services:
 - Motivation & journal
   - `GET /api/motivation/quotes`, `GET /api/motivation/random`
   - `POST /api/motivation/checklist/score` (+1 complete or −5 missed)
-  - `POST /api/motivation/urge/complete` (+1 per 15‑min session)
+  - `POST /api/motivation/urge/complete` (+1 when client awards; used after 3× 1‑min sessions)
   - `GET /api/journal/today`, `PUT /api/journal/today`, `GET /api/journal`
 - Admin & binary media
   - `POST /api/admin/reset` wipe all data
