@@ -619,8 +619,6 @@ app.post('/api/admin/restore', authMiddleware, async (req, res) => {
   res.json({ ok: true });
 });
 
-// (temporary admin cleanup endpoint removed)
-
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
   console.log(`API listening on :${port}`);
