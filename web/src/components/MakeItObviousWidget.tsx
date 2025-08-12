@@ -98,7 +98,7 @@ export default function MakeItObviousWidget() {
         try {
           await api.post('/motivation/checklist/score', { status: 'complete', date: todayKey() });
           setScored('complete');
-          try { await api.put('/motivation/checklist/status', { checked, scored: 'complete' }); } catch {}
+          try { await api.put(`/motivation/checklist/status?date=${todayKey()}`, { checked, scored: 'complete' }); } catch {}
           confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         } catch (e) {
           // ignore silently for now
@@ -109,7 +109,7 @@ export default function MakeItObviousWidget() {
   }, [allDone, scored]);
 
   useEffect(() => {
-    // On mount, if stored date is yesterday and not complete, mark missed
+    // Initial sync from API
     async function syncFromApi() {
       try {
         const { data } = await api.get('/motivation/checklist/status', { params: { date: todayKey() } });
@@ -119,6 +119,18 @@ export default function MakeItObviousWidget() {
       } catch {}
     }
     syncFromApi();
+
+    // Periodic poll to keep in sync across devices while visible
+    const pollId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        syncFromApi();
+      }
+    }, 15000);
+
+    function onVisibility() {
+      if (document.visibilityState === 'visible') syncFromApi();
+    }
+    document.addEventListener('visibilitychange', onVisibility);
 
     const timer = window.setTimeout(async () => {
       // Midnight rollover: if not complete yet and not scored missed, score missed then reset
@@ -131,7 +143,7 @@ export default function MakeItObviousWidget() {
       setScored('');
       try { await api.put(`/motivation/checklist/status?date=${todayKey()}`, { checked: items.map(() => false), scored: null }); } catch {}
     }, msUntilNextMidnight());
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); clearInterval(pollId); document.removeEventListener('visibilitychange', onVisibility); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
