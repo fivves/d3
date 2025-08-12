@@ -157,11 +157,12 @@ export function Account() {
 }
 
 function AdminTools() {
-  const [users, setUsers] = useState<Array<{id:number; username:string|null; firstName:string; lastName:string; isAdmin:boolean}>>([]);
+  const [users, setUsers] = useState<Array<{id:number; username:string|null; firstName:string; lastName:string; isAdmin:boolean; balance?:number}>>([]);
   const [err, setErr] = useState('');
   const [pin, setPin] = useState('');
   const [target, setTarget] = useState<number|''>('');
   const [busy, setBusy] = useState(false);
+  const [editingBalance, setEditingBalance] = useState<Record<number, string>>({});
 
   useEffect(() => {
     (async () => {
@@ -200,6 +201,25 @@ function AdminTools() {
     }
   }
 
+  async function applyPoints(uId: number) {
+    const raw = editingBalance[uId];
+    if (raw == null || raw.trim() === '') return;
+    const desired = Number(raw);
+    if (!Number.isFinite(desired)) {
+      setErr('Points must be a valid number');
+      return;
+    }
+    setBusy(true); setErr('');
+    try {
+      const { data } = await api.post(`/admin/users/${uId}/set-points`, { points: desired });
+      setUsers(users.map(u => u.id === uId ? { ...u, balance: data.balance } : u));
+    } catch (e:any) {
+      setErr(e?.response?.data?.error || 'Failed to set points');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <div className="sub">User list</div>
@@ -210,7 +230,16 @@ function AdminTools() {
               <div style={{ fontWeight: 700 }}>{u.username || '(no username)'} {u.isAdmin && <span className="pill">admin</span>}</div>
               <div className="sub">{u.firstName} {u.lastName}</div>
             </div>
-            <div style={{ display:'flex', gap:8 }}>
+            <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+              <div className="sub">Balance</div>
+              <input
+                inputMode="numeric"
+                style={{ width: 100 }}
+                placeholder={String(u.balance ?? 0)}
+                value={editingBalance[u.id] ?? ''}
+                onChange={(e)=>setEditingBalance(prev=>({ ...prev, [u.id]: e.target.value }))}
+              />
+              <button className="button" onClick={()=>applyPoints(u.id)} disabled={busy}>Set</button>
               <button className="button secondary" onClick={()=>deleteUser(u.id)} disabled={busy || u.isAdmin}>Delete</button>
             </div>
           </div>

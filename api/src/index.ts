@@ -114,7 +114,49 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
     select: { id: true, username: true, firstName: true, lastName: true, isAdmin: true, createdAt: true },
     orderBy: { createdAt: 'asc' }
   });
-  res.json({ users });
+  // Compute current points balance per user
+  const userIds = users.map(u => u.id);
+  let balances: Record<number, number> = {};
+  if (userIds.length > 0) {
+    try {
+      const grouped: Array<{ userId: number; _sum: { points: number | null } }> = await (prisma as any).transaction.groupBy({
+        by: ['userId'],
+        where: { userId: { in: userIds } },
+        _sum: { points: true },
+      });
+      for (const g of grouped) balances[g.userId] = g._sum.points || 0;
+    } catch {
+      // Fallback if groupBy not available
+      balances = Object.fromEntries(await Promise.all(userIds.map(async (id:number) => {
+        const txs = await prisma.transaction.findMany({ where: { userId: id } });
+        const sum = txs.reduce((acc, t) => acc + t.points, 0);
+        return [id, sum];
+      })));
+    }
+  }
+  const out = users.map(u => ({ ...u, balance: balances[u.id] ?? 0 }));
+  res.json({ users: out });
+});
+
+// Admin: set a user's points balance (creates an adjustment transaction)
+app.post('/api/admin/users/:id/set-points', authMiddleware, async (req, res) => {
+  const actorId = (req as any).userId as number;
+  if (!(await requireAdmin(actorId))) return res.status(403).json({ error: 'Admin only' });
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid user id' });
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) return res.status(404).json({ error: 'User not found' });
+  const desired = Number((req.body as any)?.points);
+  if (!Number.isFinite(desired)) return res.status(400).json({ error: 'points must be a number' });
+  const txs = await prisma.transaction.findMany({ where: { userId: id } });
+  const current = txs.reduce((acc, t) => acc + t.points, 0);
+  const delta = Math.round(desired - current);
+  if (delta === 0) return res.json({ userId: id, balance: current, delta: 0, transaction: null });
+  const note = `Admin adjustment to ${desired} (delta ${delta > 0 ? '+' : ''}${delta})`;
+  const t = await prisma.transaction.create({
+    data: { userId: id, points: delta, type: delta >= 0 ? 'earn' : 'deduct', note, date: new Date() }
+  });
+  res.json({ userId: id, previous: current, balance: current + delta, delta, transaction: t });
 });
 
 // Admin: reset/set a user's PIN
