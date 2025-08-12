@@ -81,15 +81,17 @@ export default function MakeItObviousWidget() {
   const items = useMemo(() => DEFAULT_ITEMS, []);
   const [checked, setChecked] = useState<boolean[]>(items.map(() => false));
   const [scored, setScored] = useState<'complete' | 'missed' | ''>('');
+  const [loaded, setLoaded] = useState(false);
 
   const allDone = checked.every(Boolean);
 
   useEffect(() => {
+    if (!loaded) return;
     // Persist to API for today
     (async () => {
       try { await api.put(`/motivation/checklist/status?date=${todayKey()}` , { checked, scored: scored || null }); } catch {}
     })();
-  }, [checked, scored]);
+  }, [checked, scored, loaded]);
 
   useEffect(() => {
     // Award points once when all tasks are complete
@@ -117,6 +119,7 @@ export default function MakeItObviousWidget() {
         setChecked(items.map((_, i) => Boolean(arr[i])));
         setScored(data.scored === 'complete' || data.scored === 'missed' ? data.scored : '');
       } catch {}
+      finally { setLoaded(true); }
     }
     syncFromApi();
 
