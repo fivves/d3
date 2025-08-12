@@ -423,7 +423,8 @@ app.post('/api/motivation/checklist/score', authMiddleware, async (req, res) => 
 // Checklist daily state
 app.get('/api/motivation/checklist/status', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const today = dayjs().startOf('day').toDate();
+  const dateStr = (req.query.date as string) || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
   const row = await (prisma as any).checklistDaily.findFirst({ where: { userId, date: today } });
   const checked = row?.checked || [];
   const scored = row?.scored || '';
@@ -432,8 +433,9 @@ app.get('/api/motivation/checklist/status', authMiddleware, async (req, res) => 
 
 app.put('/api/motivation/checklist/status', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const { checked, scored } = req.body as any;
-  const today = dayjs().startOf('day').toDate();
+  const { checked, scored, date } = req.body as any;
+  const dateStr = (req.query.date as string) || date || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
   const row = await (prisma as any).checklistDaily.upsert({
     where: { userId_date: { userId, date: today } as any },
     create: { userId, date: today, checked: checked || [], scored: scored || null },
@@ -452,7 +454,8 @@ app.post('/api/motivation/urge/complete', authMiddleware, async (req, res) => {
 // Breathing (1-min sessions): get today's status
 app.get('/api/motivation/breath/status', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const today = dayjs().startOf('day').toDate();
+  const dateStr = (req.query.date as string) || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
   const row = await prisma.breathDaily.findFirst({ where: { userId, date: today } });
   res.json({ date: today, count: row?.count || 0, scored: !!row?.scored });
 });
@@ -460,7 +463,8 @@ app.get('/api/motivation/breath/status', authMiddleware, async (req, res) => {
 // Breathing (1-min sessions): record one session, award +1 on 3rd (server-side)
 app.post('/api/motivation/breath/record', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const today = dayjs().startOf('day').toDate();
+  const dateStr = (req.query.date as string) || (req.body?.date as string) || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
   try {
     const existing = await prisma.breathDaily.upsert({
       where: { userId_date: { userId, date: today } as any },
@@ -488,7 +492,8 @@ app.post('/api/motivation/breath/record', authMiddleware, async (req, res) => {
 // Journal: get today's entry (if any)
 app.get('/api/journal/today', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const today = dayjs().startOf('day').toDate();
+  const dateStr = (req.query.date as string) || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
   const log = await prisma.dailyLog.findFirst({ where: { userId, date: today } });
   res.json({ log });
 });
@@ -496,8 +501,9 @@ app.get('/api/journal/today', authMiddleware, async (req, res) => {
 // Journal: upsert today's entry (editable only today)
 app.put('/api/journal/today', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
-  const { journal, mood } = req.body as any;
-  const today = dayjs().startOf('day').toDate();
+  const { journal, mood, date } = req.body as any;
+  const dateStr = (req.query.date as string) || date || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
   // Only allow editing for today
   const existing = await prisma.dailyLog.findFirst({ where: { userId, date: today } });
   const moodInt = mood === null || mood === undefined ? null : Number(mood);

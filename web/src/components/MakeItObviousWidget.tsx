@@ -87,7 +87,7 @@ export default function MakeItObviousWidget() {
   useEffect(() => {
     // Persist to API for today
     (async () => {
-      try { await api.put('/motivation/checklist/status', { checked, scored: scored || null }); } catch {}
+      try { await api.put(`/motivation/checklist/status?date=${todayKey()}` , { checked, scored: scored || null }); } catch {}
     })();
   }, [checked, scored]);
 
@@ -112,7 +112,7 @@ export default function MakeItObviousWidget() {
     // On mount, if stored date is yesterday and not complete, mark missed
     async function syncFromApi() {
       try {
-        const { data } = await api.get('/motivation/checklist/status');
+        const { data } = await api.get('/motivation/checklist/status', { params: { date: todayKey() } });
         const arr = Array.isArray(data.checked) ? data.checked : [];
         setChecked(items.map((_, i) => Boolean(arr[i])));
         setScored(data.scored === 'complete' || data.scored === 'missed' ? data.scored : '');
@@ -129,7 +129,7 @@ export default function MakeItObviousWidget() {
       } catch {}
       setChecked(items.map(() => false));
       setScored('');
-      try { await api.put('/motivation/checklist/status', { checked: items.map(() => false), scored: null }); } catch {}
+      try { await api.put(`/motivation/checklist/status?date=${todayKey()}`, { checked: items.map(() => false), scored: null }); } catch {}
     }, msUntilNextMidnight());
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps

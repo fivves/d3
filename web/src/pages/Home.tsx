@@ -55,7 +55,7 @@ export function Home() {
 
     async function computeMioFromApi() {
       try {
-        const { data } = await api.get('/motivation/checklist/status');
+        const { data } = await api.get('/motivation/checklist/status', { params: { date: todayKey() } });
         const arr = Array.isArray(data.checked) ? (data.checked as boolean[]) : [];
         const done = arr.filter(Boolean).length;
         setMioProgress({ done, total: arr.length || 6 });
