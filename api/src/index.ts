@@ -619,25 +619,7 @@ app.post('/api/admin/restore', authMiddleware, async (req, res) => {
   res.json({ ok: true });
 });
 
-// Admin: cleanup today's daily log and delete all journal entries for a user (by username)
-app.post('/api/admin/users/:username/cleanup-daily', authMiddleware, async (req, res) => {
-  const actorId = (req as any).userId as number;
-  if (!(await requireAdmin(actorId))) return res.status(403).json({ error: 'Admin only' });
-
-  const usernameParam = String(req.params.username || '').toLowerCase();
-  if (!usernameParam) return res.status(400).json({ error: 'Username is required' });
-
-  const user = await prisma.user.findUnique({ where: { username: usernameParam } });
-  if (!user) return res.status(404).json({ error: 'User not found' });
-
-  const today = dayjs().startOf('day').toDate();
-  const [delToday, delJournals] = await Promise.all([
-    prisma.dailyLog.deleteMany({ where: { userId: user.id, date: today } }),
-    prisma.dailyLog.deleteMany({ where: { userId: user.id, NOT: { journal: null } } }),
-  ]);
-
-  res.json({ userId: user.id, username: usernameParam, deletedToday: delToday.count, deletedJournalEntries: delJournals.count });
-});
+// (temporary admin cleanup endpoint removed)
 
 const port = Number(process.env.PORT || 4000);
 app.listen(port, () => {
