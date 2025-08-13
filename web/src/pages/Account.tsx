@@ -163,6 +163,10 @@ function AdminTools() {
   const [target, setTarget] = useState<number|''>('');
   const [busy, setBusy] = useState(false);
   const [editingBalance, setEditingBalance] = useState<Record<number, string>>({});
+  const [fixDate, setFixDate] = useState('');
+  const [fixUsed, setFixUsed] = useState<'clean'|'used'>('clean');
+  const [fixPaid, setFixPaid] = useState<'yes'|'no'>('no');
+  const [fixAmount, setFixAmount] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -256,6 +260,48 @@ function AdminTools() {
         <button className="button" onClick={resetPin} disabled={!target || !pin}>Set PIN</button>
       </div>
       {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
+
+      <div style={{ height: 16 }} />
+      <div className="sub">Adjust user's daily log (fix streak)</div>
+      <div className="row" style={{ gap:8, flexWrap:'wrap' }}>
+        <select value={target} onChange={(e)=>setTarget(Number(e.target.value))}>
+          <option value="">Select user…</option>
+          {users.map(u => <option key={u.id} value={u.id}>{u.username || `${u.firstName} ${u.lastName}`}</option>)}
+        </select>
+        <input type="date" value={fixDate} onChange={(e)=>setFixDate(e.target.value)} />
+        <select value={fixUsed} onChange={(e)=>setFixUsed(e.target.value as any)}>
+          <option value="clean">Mark clean</option>
+          <option value="used">Mark used</option>
+        </select>
+        {fixUsed==='used' && (
+          <>
+            <select value={fixPaid} onChange={(e)=>setFixPaid(e.target.value as any)}>
+              <option value="no">Unpaid</option>
+              <option value="yes">Paid</option>
+            </select>
+            {fixPaid==='yes' && (
+              <input inputMode="decimal" placeholder="Amount (USD)" value={fixAmount} onChange={(e)=>setFixAmount(e.target.value)} />
+            )}
+          </>
+        )}
+        <button
+          className="button"
+          disabled={!target || !fixDate || busy}
+          onClick={async ()=>{
+            setErr(''); setBusy(true);
+            try {
+              await api.post(`/admin/users/${target}/logs/set-used`, {
+                date: fixDate,
+                used: fixUsed==='used',
+                paid: fixUsed==='used' ? (fixPaid==='yes') : undefined,
+                amountCents: fixUsed==='used' && fixPaid==='yes' ? Math.round((Number(fixAmount)||0)*100) : undefined
+              });
+              alert('Daily log adjusted');
+            } catch(e:any) {
+              setErr(e?.response?.data?.error || 'Failed to adjust log');
+            } finally { setBusy(false); }
+          }}>Apply</button>
+      </div>
     </div>
   );
 }

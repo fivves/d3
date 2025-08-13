@@ -115,7 +115,7 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
     orderBy: { createdAt: 'asc' }
   });
   // Compute current points balance per user
-  const userIds = users.map(u => u.id);
+  const userIds = users.map((u: { id: number }) => u.id);
   let balances: Record<number, number> = {};
   if (userIds.length > 0) {
     try {
@@ -129,12 +129,12 @@ app.get('/api/admin/users', authMiddleware, async (req, res) => {
       // Fallback if groupBy not available
       balances = Object.fromEntries(await Promise.all(userIds.map(async (id:number) => {
         const txs = await prisma.transaction.findMany({ where: { userId: id } });
-        const sum = txs.reduce((acc, t) => acc + t.points, 0);
-        return [id, sum];
+        const sum = txs.reduce((acc: number, t: any) => acc + t.points, 0);
+        return [id, sum] as const;
       })));
     }
   }
-  const out = users.map(u => ({ ...u, balance: balances[u.id] ?? 0 }));
+  const out = users.map((u: any) => ({ ...u, balance: balances[u.id] ?? 0 }));
   res.json({ users: out });
 });
 
@@ -149,7 +149,7 @@ app.post('/api/admin/users/:id/set-points', authMiddleware, async (req, res) => 
   const desired = Number((req.body as any)?.points);
   if (!Number.isFinite(desired)) return res.status(400).json({ error: 'points must be a number' });
   const txs = await prisma.transaction.findMany({ where: { userId: id } });
-  const current = txs.reduce((acc, t) => acc + t.points, 0);
+  const current = txs.reduce((acc: number, t: any) => acc + t.points, 0);
   const delta = Math.round(desired - current);
   if (delta === 0) return res.json({ userId: id, balance: current, delta: 0, transaction: null });
   const note = `Admin adjustment to ${desired} (delta ${delta > 0 ? '+' : ''}${delta})`;
@@ -181,9 +181,9 @@ app.delete('/api/admin/users/:id', authMiddleware, async (req, res) => {
   if (!(await requireAdmin(actorId))) return res.status(403).json({ error: 'Admin only' });
   const id = Number(req.params.id);
   try {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       const prizes = await tx.prize.findMany({ where: { userId: id }, select: { id: true } });
-      const prizeIds = prizes.map(p => p.id);
+      const prizeIds = prizes.map((p: any) => p.id);
       if (prizeIds.length > 0) {
         await tx.purchase.deleteMany({ where: { prizeId: { in: prizeIds } } });
       }
@@ -200,6 +200,77 @@ app.delete('/api/admin/users/:id', authMiddleware, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete user' });
   }
+});
+
+// Admin: adjust a user's daily log used/clean for a given date, and fix points/savings accordingly
+app.post('/api/admin/users/:id/logs/set-used', authMiddleware, async (req, res) => {
+  const actorId = (req as any).userId as number;
+  if (!(await requireAdmin(actorId))) return res.status(403).json({ error: 'Admin only' });
+  const id = Number(req.params.id);
+  const { date, used, paid, amountCents } = req.body as any;
+  if (!date) return res.status(400).json({ error: 'date is required (YYYY-MM-DD)' });
+  const d = dayjs(String(date)).startOf('day').toDate();
+
+  // Ensure user exists
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) return res.status(404).json({ error: 'User not found' });
+
+  // Upsert the daily log
+  let log = await prisma.dailyLog.findFirst({ where: { userId: id, date: d } });
+  if (log) {
+    log = await prisma.dailyLog.update({ where: { id: log.id }, data: {
+      used: Boolean(used),
+      context: Boolean(used) ? (log.context || null) : null,
+      paid: Boolean(used) ? (paid != null ? Boolean(paid) : log.paid) : null,
+      amountCents: Boolean(used) ? (paid ? Number(amountCents) || 0 : null) : null,
+    }});
+  } else {
+    log = await prisma.dailyLog.create({ data: {
+      userId: id,
+      date: d,
+      used: Boolean(used),
+      context: Boolean(used) ? null : null,
+      paid: Boolean(used) ? (paid != null ? Boolean(paid) : false) : null,
+      amountCents: Boolean(used) && paid ? Number(amountCents) || 0 : null,
+    }});
+  }
+
+  // Reconcile transactions and money events for this log
+  const txForLog = await prisma.transaction.findMany({ where: { userId: id, relatedLogId: log.id } });
+  const moneyForLog = await prisma.moneyEvent.findMany({ where: { userId: id, relatedLogId: log.id } });
+
+  const ops: any[] = [];
+  // Remove existing related tx/money events
+  if (txForLog.length > 0) ops.push(prisma.transaction.deleteMany({ where: { userId: id, relatedLogId: log.id } }));
+  if (moneyForLog.length > 0) ops.push(prisma.moneyEvent.deleteMany({ where: { userId: id, relatedLogId: log.id } }));
+
+  if (!log.used) {
+    // Clean day rewards
+    ops.push(prisma.transaction.create({ data: { userId: id, points: 10, type: 'earn', note: 'Clean day (admin adjust)', relatedLogId: log.id, date: d } }));
+    const perDay = Math.round((target.weeklySpendCents || 0) / 7);
+    if (perDay > 0) ops.push(prisma.moneyEvent.create({ data: { userId: id, amountCents: perDay, type: 'saved', note: 'Clean day savings (admin adjust)', relatedLogId: log.id, date: d } }));
+  } else {
+    // Use day penalties
+    ops.push(prisma.transaction.create({ data: { userId: id, points: -20, type: 'deduct', note: 'Use day (admin adjust)', relatedLogId: log.id, date: d } }));
+    if (log.paid && log.amountCents && log.amountCents > 0) {
+      ops.push(prisma.moneyEvent.create({ data: { userId: id, amountCents: -Math.abs(log.amountCents), type: 'spent', note: 'THC purchase (admin adjust)', relatedLogId: log.id, date: d } }));
+    }
+  }
+  await prisma.$transaction(ops);
+
+  // Recompute longest streak
+  try {
+    const logs = await prisma.dailyLog.findMany({ where: { userId: id }, orderBy: { date: 'desc' } });
+    let current = 0;
+    for (const l of logs) { if (l.used) break; current += 1; }
+    const u2 = await prisma.user.findUnique({ where: { id } });
+    const longest = Math.max(u2?.longestStreakDays || 0, current);
+    if (longest !== (u2?.longestStreakDays || 0)) {
+      await prisma.user.update({ where: { id }, data: { longestStreakDays: longest } });
+    }
+  } catch {}
+
+  res.json({ log });
 });
 
 // Authenticated routes
@@ -331,9 +402,9 @@ app.get('/api/logs/today', authMiddleware, async (req, res) => {
 app.get('/api/bank/summary', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const transactions = await prisma.transaction.findMany({ where: { userId }, orderBy: { date: 'desc' } });
-  const balance = transactions.reduce((acc, t) => acc + t.points, 0);
-  const earned = transactions.filter(t => t.points > 0).reduce((a, t) => a + t.points, 0);
-  const spent = transactions.filter(t => t.points < 0).reduce((a, t) => a + Math.abs(t.points), 0);
+  const balance = transactions.reduce((acc: number, t: any) => acc + t.points, 0);
+  const earned = transactions.filter((t: any) => t.points > 0).reduce((a: number, t: any) => a + t.points, 0);
+  const spent = transactions.filter((t: any) => t.points < 0).reduce((a: number, t: any) => a + Math.abs(t.points), 0);
   res.json({ balance, totals: { earned, spent }, transactions });
 });
 
@@ -341,8 +412,8 @@ app.get('/api/bank/summary', authMiddleware, async (req, res) => {
 app.get('/api/savings', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const events = await prisma.moneyEvent.findMany({ where: { userId }, orderBy: { date: 'desc' } });
-  const saved = events.filter(e => e.amountCents > 0).reduce((a, e) => a + e.amountCents, 0);
-  const spent = events.filter(e => e.amountCents < 0).reduce((a, e) => a + Math.abs(e.amountCents), 0);
+  const saved = events.filter((e: any) => e.amountCents > 0).reduce((a: number, e: any) => a + e.amountCents, 0);
+  const spent = events.filter((e: any) => e.amountCents < 0).reduce((a: number, e: any) => a + Math.abs(e.amountCents), 0);
   const net = saved - spent;
   res.json({ saved, spent, net, events });
 });
@@ -351,7 +422,7 @@ app.get('/api/savings', authMiddleware, async (req, res) => {
 app.get('/api/prizes', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const prizes = await prisma.prize.findMany({ where: { userId }, include: { purchases: true }, orderBy: { createdAt: 'desc' } });
-  const withUrls = prizes.map(p => ({
+  const withUrls = prizes.map((p: any) => ({
     ...p,
     imageUrl: p.imageData ? `/api/prizes/${p.id}/image` : p.imageUrl,
   }));
@@ -405,9 +476,9 @@ app.post('/api/prizes/:id/purchase', authMiddleware, async (req, res) => {
   if (!prize) return res.status(404).json({ error: 'Not found' });
   if (!prize.active) return res.status(400).json({ error: 'Already purchased; restock to buy again' });
   const transactions = await prisma.transaction.findMany({ where: { userId } });
-  const balance = transactions.reduce((acc, t) => acc + t.points, 0);
+  const balance = transactions.reduce((acc: number, t: any) => acc + t.points, 0);
   if (balance < prize.costPoints) return res.status(400).json({ error: 'Insufficient points' });
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: any) => {
     const purchase = await tx.purchase.create({ data: { userId, prizeId: prize.id } });
     await tx.transaction.create({ data: { userId, points: -Math.abs(prize.costPoints), type: 'spend', note: `Purchased ${prize.name}`, relatedPrizeId: prize.id } });
     const updated = await tx.prize.update({ where: { id: prize.id }, data: { active: false } });
