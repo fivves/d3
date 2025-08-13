@@ -318,6 +318,15 @@ app.get('/api/logs', authMiddleware, async (req, res) => {
   res.json({ logs });
 });
 
+// Today's log status
+app.get('/api/logs/today', authMiddleware, async (req, res) => {
+  const userId = (req as any).userId as number;
+  const dateStr = (req.query.date as string) || '';
+  const today = dateStr ? dayjs(dateStr).startOf('day').toDate() : dayjs().startOf('day').toDate();
+  const log = await prisma.dailyLog.findFirst({ where: { userId, date: today } });
+  res.json({ log });
+});
+
 // Bank
 app.get('/api/bank/summary', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;

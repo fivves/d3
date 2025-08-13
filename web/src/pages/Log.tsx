@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import confetti from 'canvas-confetti';
+import dayjs from 'dayjs';
 
 export function Log() {
   const [used, setUsed] = useState<boolean | null>(null);
@@ -9,6 +10,18 @@ export function Log() {
   const [amount, setAmount] = useState('');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [already, setAlready] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get('/logs/today', { params: { date: dayjs().format('YYYY-MM-DD') } });
+        setAlready(!!data.log);
+      } catch {}
+    })();
+    const id = window.setTimeout(() => setAlready(false), Math.max(0, dayjs().add(1,'day').startOf('day').diff(dayjs())));
+    return () => clearTimeout(id);
+  }, []);
 
   function fireConfetti() {
     confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } });
@@ -38,6 +51,15 @@ export function Log() {
     } catch (e:any) {
       setErr(e?.response?.data?.error || 'Failed to log');
     }
+  }
+
+  if (already) {
+    return (
+      <div className="card" style={{ textAlign:'center', borderStyle:'dashed' }}>
+        <div className="card-title" style={{ justifyContent:'center' }}><span className="icon">🗓️</span>Daily Log</div>
+        <div className="sub">You've already logged today. Come back tomorrow to submit a new log.</div>
+      </div>
+    );
   }
 
   if (used === null) {
