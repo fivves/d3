@@ -233,25 +233,48 @@ app.post('/api/logs/daily', authMiddleware, async (req, res) => {
   const userId = (req as any).userId as number;
   const { date, used, context, paid, amountCents } = req.body as any;
   const d = date ? dayjs(date).startOf('day').toDate() : dayjs().startOf('day').toDate();
-  const existing = await prisma.dailyLog.findFirst({ where: { userId, date: d } });
-  if (existing) return res.status(400).json({ error: 'Already logged for this date' });
 
-  const log = await prisma.dailyLog.create({
-    data: {
-      userId,
-      date: d,
-      used: Boolean(used),
-      context: context || null,
-      paid: used ? Boolean(paid) : null,
-      amountCents: used && paid ? Number(amountCents) || 0 : null,
-    },
-  });
+  let log = await prisma.dailyLog.findFirst({ where: { userId, date: d } });
+  const desiredUsed = Boolean(used);
+  const desiredPaid = desiredUsed ? Boolean(paid) : null;
+  const desiredAmount = desiredUsed && paid ? Number(amountCents) || 0 : null;
+
+  if (log) {
+    // Update existing daily log for this date
+    log = await prisma.dailyLog.update({
+      where: { id: log.id },
+      data: {
+        used: desiredUsed,
+        context: context || null,
+        paid: desiredPaid,
+        amountCents: desiredAmount,
+      },
+    });
+
+    // If already awarded/deducted points for this log, prevent duplicate
+    const existingTx = await prisma.transaction.findFirst({ where: { userId, relatedLogId: log.id } });
+    if (existingTx) {
+      return res.status(200).json({ log, alreadyLogged: true });
+    }
+  } else {
+    // Create new daily log
+    log = await prisma.dailyLog.create({
+      data: {
+        userId,
+        date: d,
+        used: desiredUsed,
+        context: context || null,
+        paid: desiredPaid,
+        amountCents: desiredAmount,
+      },
+    });
+  }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return res.status(500).json({ error: 'User missing' });
+
   const txs: any[] = [];
   const moneyEvents: any[] = [];
-
-  if (!user) return res.status(500).json({ error: 'User missing' });
 
   if (!log.used) {
     txs.push({ userId, points: 10, type: 'earn', note: 'Clean day', relatedLogId: log.id });
@@ -278,9 +301,9 @@ app.post('/api/logs/daily', authMiddleware, async (req, res) => {
         if (l.used) break;
         current += 1;
       }
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-      const longest = Math.max(user?.longestStreakDays || 0, current);
-      if (longest !== (user?.longestStreakDays || 0)) {
+      const u2 = await prisma.user.findUnique({ where: { id: userId } });
+      const longest = Math.max(u2?.longestStreakDays || 0, current);
+      if (longest !== (u2?.longestStreakDays || 0)) {
         await prisma.user.update({ where: { id: userId }, data: { longestStreakDays: longest } });
       }
     } catch {}
