@@ -7,7 +7,6 @@ export function Account() {
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [weeklySpend, setWeeklySpend] = useState(user ? String((user.weeklySpendCents||0)/100) : '');
-  const [startDate, setStartDate] = useState(user?.startDate ? user.startDate.substring(0,10) : '');
   const [newPin, setNewPin] = useState('');
   const [avatar, setAvatar] = useState<File | null>(null);
   const [msg, setMsg] = useState('');
@@ -21,7 +20,6 @@ export function Account() {
     setFirstName(user.firstName);
     setLastName(user.lastName);
     setWeeklySpend(String((user.weeklySpendCents||0)/100));
-    setStartDate(user.startDate ? user.startDate.substring(0,10) : '');
   }, [user]);
 
   async function save(e: React.FormEvent) {
@@ -30,7 +28,6 @@ export function Account() {
     form.set('firstName', firstName);
     form.set('lastName', lastName);
     form.set('weeklySpendCents', String(Math.round((Number(weeklySpend)||0)*100)));
-    if (startDate) form.set('startDate', startDate);
     if (newPin) form.set('newPin', newPin);
     if (avatar) form.set('avatar', avatar);
     try {
@@ -44,31 +41,49 @@ export function Account() {
 
   return (
     <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-      {/* Left: Profile & preferences */}
-      <div className="card fancy">
-        <div className="card-title"><span className="icon">👤</span>My Account</div>
-        <form onSubmit={save}>
-          <label>First name</label>
-          <input value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
-          <label>Last name</label>
-          <input value={lastName} onChange={(e)=>setLastName(e.target.value)} />
-          <label>Weekly spend (USD)</label>
-          <input inputMode="decimal" value={weeklySpend} onChange={(e)=>setWeeklySpend(e.target.value)} />
-          <label>Start date</label>
-          <input type="date" value={startDate} onChange={(e)=>setStartDate(e.target.value)} />
-          <label>Change PIN</label>
-          <input inputMode="numeric" maxLength={4} value={newPin} onChange={(e)=>setNewPin(e.target.value)} placeholder="1234" />
-          <label>Profile picture</label>
-          <input type="file" accept="image/*" onChange={(e)=>setAvatar(e.target.files?.[0]||null)} />
-          <div style={{ display:'flex', gap:8, marginTop:8 }}>
-            <button className="button" type="submit">Save</button>
-          </div>
-          {msg && <div style={{ marginTop: 8 }}>{msg}</div>}
-          {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
-        </form>
+      {/* Left column: cleaner, smaller cards */}
+      <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">👤</span>Profile</div>
+          <form onSubmit={save}>
+            <label>First name</label>
+            <input value={firstName} onChange={(e)=>setFirstName(e.target.value)} />
+            <label>Last name</label>
+            <input value={lastName} onChange={(e)=>setLastName(e.target.value)} />
+            <label>Weekly spend (USD)</label>
+            <input inputMode="decimal" value={weeklySpend} onChange={(e)=>setWeeklySpend(e.target.value)} />
+            <div style={{ display:'flex', gap:8, marginTop:8 }}>
+              <button className="button" type="submit">Save</button>
+            </div>
+            {msg && <div style={{ marginTop: 8 }}>{msg}</div>}
+            {err && <div className="sub" style={{ color:'#f87171' }}>{err}</div>}
+          </form>
+        </div>
+
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">🔒</span>Security</div>
+          <form onSubmit={save}>
+            <label>Change PIN</label>
+            <input inputMode="numeric" maxLength={4} value={newPin} onChange={(e)=>setNewPin(e.target.value)} placeholder="1234" />
+            <div style={{ display:'flex', gap:8, marginTop:8 }}>
+              <button className="button" type="submit">Update PIN</button>
+            </div>
+          </form>
+        </div>
+
+        <div className="card fancy">
+          <div className="card-title"><span className="icon">🖼️</span>Avatar</div>
+          <form onSubmit={save}>
+            <label>Profile picture</label>
+            <input type="file" accept="image/*" onChange={(e)=>setAvatar(e.target.files?.[0]||null)} />
+            <div style={{ display:'flex', gap:8, marginTop:8 }}>
+              <button className="button" type="submit">Upload</button>
+            </div>
+          </form>
+        </div>
       </div>
 
-      {/* Right: Backup/Restore and Danger Zone */}
+      {/* Right column: tools */}
       <div className="card fancy">
         <div className="card-title"><span className="icon">💾</span>Backup & Restore</div>
         <div className="row" style={{ gap:8, flexWrap:'wrap' }}>
