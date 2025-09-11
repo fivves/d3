@@ -227,7 +227,7 @@ export function Home() {
         <div className="card gradient" style={{ display: 'flex', flexDirection: 'column', minHeight: 180 }}>
           <div>
             <div className="card-title"><span className="icon">🌊</span>Urge Surfing</div>
-            <div className="sub">Cravings rise and fall like waves. Ride one for 15 minutes.</div>
+            <div className="sub">Cravings rise and fall like waves. Ride one for a minute at a time.</div>
           </div>
           <div className="card-cta"><Link className="button" to="/motivation">Start surfing</Link></div>
         </div>
